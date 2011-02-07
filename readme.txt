@@ -9,7 +9,7 @@ Allows you to display books, DVDs, CDs, any kind of media found on Amazon that y
 
 == Description ==
 
-Amazon Media Libraries is a complete rewrite of the Now Reading series of plugins [Rob Miller's Now Reading plugin](http://robm.me.uk/projects/plugins/wordpress/now-reading/ "Original Now Reading Plugin"). Users with WordPress 2.6 and below should either upgrade or use Rob Miiller's original plugin. Users with WordPress 2.6 - 2.9 should use the Now Reading Reloaded plugin.
+Amazon Media Libraries is a complete rewrite of the Now Reading series of plugins ([Rob Miller's Now Reading plugin](http://robm.me.uk/projects/plugins/wordpress/now-reading/ "Original Now Reading Plugin"), [Ben Gunnink's Now Reading Reloaded plugin] (http://wordpress.org/extend/plugins/now-reading-reloaded/ "Now Reading Reloaded Plugin"), and [Zack Ajmal's Now Watching plugin] (http://wordpress.org/extend/plugins/now-watching/ "Now Watching Plugin") . Users with WordPress 2.6 and below should either upgrade or use Rob Miiller's original plugin. Users with WordPress 2.6 - 2.9 should use the Now Reading Reloaded plugin.
 
 With Amazon Media Libraries, you can manage multiple libraries/shelves of your current media, keeping track of when you've last used them, and how often you have used them.
 

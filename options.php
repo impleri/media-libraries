@@ -38,7 +38,7 @@ function aml_options_init() {
 
 	register_setting('amazon_library', 'aml_options', 'aml_options_validate');
 
-	add_options_page(__('Now Reading Reloaded', 'amazon-library'), __('Now Reading Reloaded', 'amazon-library'), 'manage_options', 'aml_options', 'aml_options_page');
+	add_options_page(__('Amazon Media Libraries', 'amazon-library'), __('Amazon Media Libraries', 'amazon-library'), 'manage_options', 'aml_options', 'aml_options_page');
 
 	add_settings_section('aml_options_amazon', __('Amazon Settings', 'amazon-library'), 'aml_options_amazon', 'aml_options');
 	add_settings_section('aml_options_display', __('Display Settings', 'amazon-library'), 'aml_options_display', 'aml_options');
@@ -66,7 +66,7 @@ function aml_options_page() {
 ?>
 	<div class="wrap">
 	<form method="post" action="options.php">
-		<h2>Now Reading Reloaded</h2>
+		<h2>Amazon Media Libraries</h2>
 		 <?php settings_fields('amazon_library'); ?>
 		<?php do_settings_sections('aml_options'); ?>
 
@@ -149,7 +149,7 @@ function aml_associate_field() {
 
 function aml_domain_field() {
 	$options = get_option('aml_options');
-	$aml_domains = aml_get_domains();
+	$aml_domains = aml_amazon::$domains;
 ?>
 <select id="aml_domain" name="aml_options[aml_domain]">
 <?php foreach ($aml_domains as $domain => $country) { ?>

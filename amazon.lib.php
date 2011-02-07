@@ -1,7 +1,7 @@
 <?php
 /**
  * Amazon wrapper
- * @package now-reading
+ * @package amazon-library
  * $Rev$
  * $Date$
  */
@@ -10,24 +10,30 @@ require_once dirname(__FILE__) . '/lib/AmazonECS.class.php';
 
 class aml_amazon {
 
-	var $domains = array(
-			'us' => 'United States',
-			'uk' => 'United Kingdom',
-		);
+	public static $domains = array(
+		'US' => 'United States',
+		'uk' => 'United Kingdom',
+	);
 
-	var $error = '<div class="">%s</div>';
+	public static $categories = array(
+		'Books',
+		'DVD',
+		'Music',
+	);
 
-	var $blank_image = '';
+	public static $error = '<div class="">%s</div>';
 
-	var $image_base = 'http://ecx.images-amazon.com/images/I/';
+	public static $blank_image = '';
 
-	function get() {
+	public static $image_base = 'http://ecx.images-amazon.com/images/I/';
+
+	public static function get() {
 		static $amazon;
 
 		if (empty($amazon)) {
-			$options = get_option('now_reading_options');
+			$options = get_option('aml_options');
 			if (!empty($options['aml_amazon_id']) && !empty($options['aml_secret_key'])) {
-				$country = (empty($options['aml_domain'])) ? 'US' : $options['aml_domain'];
+				$country = (empty($options['aml_domain'])) ? 'US' : strtoupper($options['aml_domain']);
 				$amazon = new AmazonECS($options['aml_amazon_id'], $options['aml_secret_key'], $country, $options['aml_associate']);
 			}
 			else {
@@ -37,14 +43,18 @@ class aml_amazon {
 		return $amazon;
 	}
 
-	function search ($search, $type='Books') {
+	public static function search ($search, $type='Books') {
 		$amazon = self::get();
+		if (!$amazon) {
+			return __('Error loading Amazon ECS library', 'amazon-library');
+		}
+
 		$ret = '';
 		try {
 			$response = $amazon->category($type)->responseGroup('Small,Images')->search($search);
 		}
 		catch(Exception $e) {
-			$ret = sprintf(self::$error, $e->getMessage());
+			$ret .= sprintf(self::$error, $e->getMessage());
 		}
 
 		if (is_object($response)) {
@@ -57,14 +67,18 @@ class aml_amazon {
 		return $ret;
 	}
 
-	function lookup ($asin) {
+	public static function lookup ($asin) {
 		$amazon = self::get();
+		if (!$amazon) {
+			return __('Error loading Amazon ECS library', 'amazon-library');
+		}
+
 		$ret = '';
 		try {
 			$response = $amazon->responseGroup('Small,Images')->lookup($asin);
 		}
 		catch(Exception $e) {
-			$ret = sprintf(self::$error, $e->getMessage());
+			$ret .= sprintf(self::$error, $e->getMessage());
 		}
 
 		if (is_object($response)) {
@@ -75,37 +89,49 @@ class aml_amazon {
 		return $ret;
 	}
 
-	function parse ($item) {
+	public static function parse ($item) {
 		$ret = '';
 
-		$image = (isset($item->MediumImage)) ? $item->MediumImage->URL : ((isset($item->SmallImage)) ? $item->SmallImage->URL : ((isset($item->LargeImage)) ? $item->LargeImage->URL : self::$blank_image));
-		if (isset($image)) {
-			$ret .= '<div class="amz-item-title"><img src="' . $image . '" /></div>';
-			//echo '<p>The base image file is ' . str_replace(array(self::$image_base, '.jpg', '._SL75_', '._SL160'), '', $image) . '</p>';
-		}
+		$ret .= '<div class="aml-item-details">';
+		$ret .= '<div class="aml-item-title">' . $item->ItemAttributes->Title . '</div>';
 
-		$ret .= '<div class="amz-item-details"><div class="amz-item-title">' . $item->ItemAttributes->Title . '</div>';
-		$author = (is_array($item->ItemAttributes->Author)) ? implode('; ', $item->ItemAttributes->Author) : $item->ItemAttributes->Author;
-		if (!empty($author)) {
-			$ret .= '<div class="amz-item-author">Author: ' . $author . '</div>';
+		$authors = array();
+		if (isset($item->ItemAttributes->Author)) {
+			$authors = (array)$item->ItemAttributes->Author;
 		}
-
 		if (isset($item->ItemAttributes->Creator)) {
 			if (is_array($item->ItemAttributes->Creator)) {
 				foreach ($item->ItemAttributes->Creator as $extra_name) {
-					$ret .= '<div class="amz-item-author">' . $extra_name->Role . ': ' . $extra_name->_ . '</p>';
-					${$extra_name->Role} = $extra_name->_;
+					//$ret .= '<div class="aml-item-author">' . $extra_name->Role . ': <span class="aml-item-authors">' . $extra_name->_ . '</span></div>';
+					$authors[] = $extra_name->_;
 				}
 			}
 			else {
-				$ret .= '<div class="amz-item-author">' . $item->ItemAttributes->Creator->Role . ': ' . $item->ItemAttributes->Creator->_ . '</p>';
-				${$item->ItemAttributes->Creator->Role} = $item->ItemAttributes->Creator->_;
+// 				$ret .= '<div class="aml-item-author">' . $item->ItemAttributes->Creator->Role . ': <span class="aml-item-authors">' . $item->ItemAttributes->Creator->_ . '</span></div>';
+				$authors[] = $item->ItemAttributes->Creator->_;
 			}
 		}
 
-		$ret .= '<div class="amz-item-asin">ASIN: ' . $item->ASIN . '</div>';
-		$ret .= '<div class="amz-item-link"><a href="' . $item->DetailPageURL . '">Details</a></div>';
+		if (!empty($authors)) {
+			array_walk($authors, 'aml_clean_name');
+			$ret .= '<div class="aml-item-author">Author: <span class="aml-item-authors">' . implode(', ', $authors) . '</span></div>';
+			}
 
-		return '<div class="amz-list-item">' . $ret . '</div>';
+		$ret .= '<div class="aml-item-asin">ASIN: ' . $item->ASIN . '</div>';
+		$ret .= '<div class="aml-item-link"><a href="' . $item->DetailPageURL . '">Details</a></div>';
+		$ret .= '</div>';
+
+		$image = (isset($item->MediumImage)) ? $item->MediumImage->URL : ((isset($item->SmallImage)) ? $item->SmallImage->URL : ((isset($item->LargeImage)) ? $item->LargeImage->URL : self::$blank_image));
+		if (!empty($image)) {
+			$ret .= '<div class="aml-item-image"><img src="' . $image . '" /></div>';
+			//echo '<p>The base image file is ' . str_replace(array(self::$image_base, '.jpg', '._SL75_', '._SL160'), '', $image) . '</p>';
+		}
+
+		$ret .= '<div id="' . $item->ASIN . '" class="aml-item">' . __('Use this item', 'amazon-library') . '</div>';
+		return '<div id="aml-'.$item->ASIN.'" class="aml-list-item">' . $ret . '</div>' . "\n";
 	}
+}
+
+function aml_clean_name (&$item, $key='') {
+	str_replace(array(',', '  '), array('', ' '), $item);
 }
