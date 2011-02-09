@@ -18,8 +18,8 @@ function aml_default_options() {
 		'aml_image_size' => 'med',
 		'aml_per_page' => 20,
 		'aml_slug_base' => 'library',
-		'aml_slug_product' => 'book',
-		'aml_slug_author' => 'author',
+		'aml_slug_product' => 'product',
+		'aml_slug_person' => 'person',
 		'aml_slug_tag' => 'tag',
 		'aml_slug_user' => 'user',
 		'aml_version' => AML_VERSION,
@@ -54,7 +54,7 @@ function aml_options_init() {
 	add_settings_field('aml_per_page', __('Books per page', 'amazon-library'), 'aml_per_page_field', 'aml_options', 'aml_options_display');
 	add_settings_field('aml_slug_base', __('Permalink base', 'amazon-library'), 'aml_slug_base_field', 'aml_options', 'aml_options_display');
 	add_settings_field('aml_slug_product', __('Product base', 'amazon-library'), 'aml_slug_product_field', 'aml_options', 'aml_options_display');
-	add_settings_field('aml_slug_author', __('Author base', 'amazon-library'), 'aml_slug_author_field', 'aml_options', 'aml_options_display');
+	add_settings_field('aml_slug_person', __('Person base', 'amazon-library'), 'aml_slug_person_field', 'aml_options', 'aml_options_display');
 	add_settings_field('aml_slug_tag', __('Tag base', 'amazon-library'), 'aml_slug_tag_field', 'aml_options', 'aml_options_display');
 }
 add_action('admin_menu', 'aml_options_init');
@@ -98,7 +98,7 @@ function aml_options_validate ($aml_post) {
 	$valid['aml_per_page'] = ($aml_post['aml_per_page']) ? intval($aml_post['aml_per_page']) : null;
 	$valid['aml_slug_base'] = ($aml_post['aml_slug_base']) ? str_replace('#', '', $aml_post['aml_slug_base']) : null;
 	$valid['aml_slug_product'] = ($aml_post['aml_slug_product']) ? str_replace('#', '', $aml_post['aml_slug_product']) : null;
-	$valid['aml_slug_author'] = ($aml_post['aml_slug_author']) ? str_replace('#', '', $aml_post['aml_slug_author']) : null;
+	$valid['aml_slug_person'] = ($aml_post['aml_slug_person']) ? str_replace('#', '', $aml_post['aml_slug_person']) : null;
 	$valid['aml_slug_tag'] = ($aml_post['aml_slug_tag']) ? str_replace('#', '', $aml_post['aml_slug_tag']) : null;
 	$valid['aml_slug_user'] = (!empty($aml_post['aml_slug_user'])) ? str_replace('#', '', $aml_post['aml_slug_user']) : null;
 
@@ -195,11 +195,11 @@ function aml_slug_product_field() {
 <p><?php _e('NB: Only Alpha-numerics and dashes are allowed.', 'amazon-library'); ?></p>
 <?php }
 
-function aml_slug_author_field() {
+function aml_slug_person_field() {
 	$options = get_option('aml_options');
 ?>
-<input type="text" size="50" id="aml_slug_author" name="aml_options[aml_slug_author]" value="<?php echo $options['aml_slug_author']; ?>" />
-<p><?php _e('Tag prepended for author URLs. Default is author.', 'amazon-library'); ?></p>
+<input type="text" size="50" id="aml_slug_person" name="aml_options[aml_slug_person]" value="<?php echo $options['aml_slug_person']; ?>" />
+<p><?php _e('Tag prepended for person URLs (e.g. authors, editors, actors, directors, etc). Default is person.', 'amazon-library'); ?></p>
 <p><?php _e('NB: Only Alpha-numerics and dashes are allowed.', 'amazon-library'); ?></p>
 <?php }
 

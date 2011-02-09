@@ -92,6 +92,7 @@ function aml_shelf_mb_lookup() {
 function aml_shelf_mb_meta() {
 	global $post;
 	$review = get_post_meta($post->ID, 'aml_image', true);
+	$rating = get_post_meta($post->ID, 'aml_rating', true);
 
 	// Verify
 	echo'<input type="hidden" name="ch_link_url_noncename" id="ch_link_url_noncename" value="'.wp_create_nonce( plugin_basename(__FILE__) ).'" />';

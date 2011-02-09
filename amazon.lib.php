@@ -1,9 +1,7 @@
 <?php
 /**
- * Amazon wrapper
+ * Wrapper for Amazon ECS library
  * @package amazon-library
- * $Rev$
- * $Date$
  */
 
 require_once dirname(__FILE__) . '/lib/AmazonECS.class.php';
@@ -12,7 +10,11 @@ class aml_amazon {
 
 	public static $domains = array(
 		'US' => 'United States',
-		'uk' => 'United Kingdom',
+		'UK' => 'United Kingdom',
+		'DE' => 'Germany',
+		'JP' => 'Japan',
+		'FR' => 'France',
+		'CA' => 'Canada',
 	);
 
 	public static $categories = array(
@@ -43,7 +45,7 @@ class aml_amazon {
 		return $amazon;
 	}
 
-	public static function search ($search, $type='Books') {
+	public static function search ($search, $type='Books', $page=1) {
 		$amazon = self::get();
 		if (!$amazon) {
 			return __('Error loading Amazon ECS library', 'amazon-library');
@@ -51,17 +53,25 @@ class aml_amazon {
 
 		$ret = '';
 		try {
-			$response = $amazon->category($type)->responseGroup('Small,Images')->search($search);
+			if ($page>1) {
+				$response = $amazon->category($type)->responseGroup('Small,Images')->optionalParameters(array('ItemPage' => $page))->search($search);
+			}
+			else {
+				$response = $amazon->category($type)->responseGroup('Small,Images')->search($search);
+			}
 		}
 		catch(Exception $e) {
 			$ret .= sprintf(self::$error, $e->getMessage());
 		}
 
 		if (is_object($response)) {
-			if ('True' == $response->Items->Request->IsValid &&  intval($response->Items->TotalResults) > 0) {
+			if (intval($response->Items->TotalResults) > 0) {
 				foreach ($response->Items->Item as $result) {
 					$ret .= self::parse($result);
 				}
+			}
+			else {
+				$ret .= __('Nothing found for the search query', 'amazon-library');
 			}
 		}
 		return $ret;

@@ -47,8 +47,8 @@ function aml_check() {
  * Creates our taxonomies using WP taxonomy & post type APIs
  */
 function aml_init() {
-	aml_taxonomy_products();
-	aml_taxonomy_authors();
+	aml_type_products();
+	aml_taxonomy_people();
 	aml_taxonomy_tags();
 	aml_capabilities();
 	wp_enqueue_style('aml-style', plugins_url('/css/amazon.css', dirname(__FILE__) ));
