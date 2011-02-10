@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Amazon Media Libraries
-Version: 0.9.0
+Version: 0.9.1 Alpha
 Plugin URI: http://impleri.net/development/amazon_library/
 Description: Allows you to display the media you're reading/watching with cover art fetched automatically from Amazon.
 Author: Christopher Roussel
