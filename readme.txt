@@ -15,7 +15,7 @@ Amazon Media Libraries is a complete rewrite of the Now Reading series of plugin
 
 With Amazon Media Libraries, you can manage multiple libraries/shelves of your current media, keeping track of when you've last used them, and how often you have used them.
 
-**Requirements**: PHP5, SimpleXML, and SOAP libraries. In very few cases will these not be met automatically.
+**Requirements**: PHP5 with SimpleXML and SOAP libraries. In very few cases will these not be met automatically.
 
 
 == Installation ==
@@ -26,10 +26,6 @@ With Amazon Media Libraries, you can manage multiple libraries/shelves of your c
 
 
 == Frequently Asked Questions ==
-
-= When will you implement feature X? =
-
-New feature development is planned, but I have no clear timeline as the maintenance of this plugin is purely a hobby.
 
 = Why does my library page look funny? =
 
@@ -55,7 +51,7 @@ My suggestion to those who are having trouble is to open up the template (such a
 
 = 0.9.0 =
 * First public alpha release
-* Rewrite of NRR
+* Begin rewrite of NRR
 * Now using the official Amazon library for searching/lookup
 * Now using WP taxonomies and custom post_type instead of separate tables
 * Added feature to handle multiple media types (books, DVD, CD)
@@ -70,15 +66,15 @@ My suggestion to those who are having trouble is to open up the template (such a
 * Third alpha release
 * Added feature to use multiple shelves
 * Added feature to handle multiple users
-* Uses auth privileges (manage_library) and WP roles to restrict/permit add/manage items rather than user levels
+* Uses auth privileges and WP roles to restrict/permit add/manage items rather than user levels
 
 = 0.9.3 =
 * First beta release
-* Added feature to track multiple readings/viewings/reviews
+* (Re-)added feature to track (multiple) readings/viewings/reviews
 
 = 0.9.4 =
 * Second beta release
-* Template files added for k2 and TwentyTen templates
+* (Re-)added template files for k2 and TwentyTen templates
 
 = 0.9.5 =
 * Third beta release

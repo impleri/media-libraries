@@ -21,6 +21,7 @@ class aml_amazon {
 		'Books',
 		'DVD',
 		'Music',
+		'VideoGames',
 	);
 
 	public static $error = '<div class="">%s</div>';
@@ -105,43 +106,83 @@ class aml_amazon {
 		$ret .= '<div class="aml-item-details">';
 		$ret .= '<div class="aml-item-title">' . $item->ItemAttributes->Title . '</div>';
 
-		$authors = array();
+		$people = array();
 		if (isset($item->ItemAttributes->Author)) {
-			$authors = (array)$item->ItemAttributes->Author;
+			$people = (array)$item->ItemAttributes->Author;
 		}
 		if (isset($item->ItemAttributes->Creator)) {
 			if (is_array($item->ItemAttributes->Creator)) {
 				foreach ($item->ItemAttributes->Creator as $extra_name) {
-					//$ret .= '<div class="aml-item-author">' . $extra_name->Role . ': <span class="aml-item-authors">' . $extra_name->_ . '</span></div>';
-					$authors[] = $extra_name->_;
+					$people[] = $extra_name->_;
 				}
 			}
 			else {
-// 				$ret .= '<div class="aml-item-author">' . $item->ItemAttributes->Creator->Role . ': <span class="aml-item-authors">' . $item->ItemAttributes->Creator->_ . '</span></div>';
-				$authors[] = $item->ItemAttributes->Creator->_;
+				$people[] = $item->ItemAttributes->Creator->_;
 			}
 		}
 
-		if (!empty($authors)) {
-			array_walk($authors, 'aml_clean_name');
-			$ret .= '<div class="aml-item-author">Author: <span class="aml-item-authors">' . implode(', ', $authors) . '</span></div>';
+		if (!empty($people)) {
+			array_walk($people, 'aml_clean_name');
+			$ret .= '<div class="aml-item-people">' . __('People', 'amazon-library') . ': <span class="aml-item-people-names">' . implode(', ', $people) . '</span></div>';
 			}
 
-		$ret .= '<div class="aml-item-asin">ASIN: ' . $item->ASIN . '</div>';
+		$ret .= '<div class="aml-item-asin">ASIN: <span class="aml-item-asin-number">' . $item->ASIN . '</span></div>';
 		$ret .= '<div class="aml-item-link"><a href="' . $item->DetailPageURL . '">Details</a></div>';
+		$ret .= '<div id="' . $item->ASIN . '" class="aml-item">' . __('Use this item', 'amazon-library') . '</div>';
 		$ret .= '</div>';
 
 		$image = (isset($item->MediumImage)) ? $item->MediumImage->URL : ((isset($item->SmallImage)) ? $item->SmallImage->URL : ((isset($item->LargeImage)) ? $item->LargeImage->URL : self::$blank_image));
 		if (!empty($image)) {
 			$ret .= '<div class="aml-item-image"><img src="' . $image . '" /></div>';
-			//echo '<p>The base image file is ' . str_replace(array(self::$image_base, '.jpg', '._SL75_', '._SL160'), '', $image) . '</p>';
 		}
 
-		$ret .= '<div id="' . $item->ASIN . '" class="aml-item">' . __('Use this item', 'amazon-library') . '</div>';
 		return '<div id="aml-'.$item->ASIN.'" class="aml-list-item">' . $ret . '</div>' . "\n";
+	}
+
+	function strip_image ($url) {
+		return str_replace(array(self::$image_base, '.jpg', '._SL75_', '._SL160'), '', $image);
+	}
+
+	function build_image ($image, $size='med') {
+		if (0 == strpos('http', $image)) {
+			return $image;
+		}
+
+		switch ($size) {
+			case 'lg':
+				$post = '160';
+				break;
+			case 'sm':
+				$post = '75';
+				break;
+			case 'med':
+			default:
+				$post = '110';
+				break;
+		}
+		return self::$image_base . $image . '._SL' . $post . '_.jpg';
 	}
 }
 
+// strips commas from name
 function aml_clean_name (&$item, $key='') {
 	str_replace(array(',', '  '), array('', ' '), $item);
 }
+
+// handle js callbacks
+function aml_ajax_callback() {
+	// validate posted data
+	$search = (isset($_POST['search'])) ? $_POST['search'] : '';
+	$type = (isset($_POST['type'])) ? $_POST['type'] : '';
+	$lookup = (isset($_POST['lookup'])) ? $_POST['lookup'] : '';
+
+	// run amazon query
+	$ret = (!empty($lookup)) ? aml_amazon::lookup($lookup) : aml_amazon::search($search, $type);
+
+	//return results
+	echo $ret;
+	die;
+}
+
+add_action('wp_ajax_aml_amazon_search', 'aml_ajax_callback');
+//add_action('wp_ajax_aml_amazon_lookup', 'aml_ajax_callback')

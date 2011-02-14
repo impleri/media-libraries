@@ -1,0 +1,58 @@
+#aml_search_string-prompt-text, #aml_lookup_string-prompt-text {
+	padding: 8x;
+	position: absolute;
+	color: #bbb;
+	font-size: 1.2em;
+}
+
+.aml-list-item {
+	border: 1px solid black;
+	overflow: auto;
+	clear:both;
+	margin: 10px auto;
+	width: 80%;
+	max-width: 800px;
+}
+.aml-item-image {}
+.aml-item-details {
+	float:right;
+}
+.aml-item-title {
+	font-weight: bold;
+	font-size: +2em;
+}
+.aml-item-people {}
+.aml-item-people-names {
+	font-style: italic;
+}
+.aml-item-asin {}
+.aml-item-link {}
+.aml-item {
+	border: 2px dashed gray;
+	background-color: white;
+	width: 30%;
+	margin: 15px auto;
+}
+.aml-hover {
+	background-color: yellow;
+}
+
+#aml_search_button {
+	float: left;
+}
+
+#aml_search_reset {
+	float: right;
+}
+
+.aml_search_box {
+/*	overflow: auto;*/
+}
+
+#aml_image, #aml_link, #aml_asin {
+	width: 250px;
+}
+
+#aml_image_preview {
+	text-align: center;
+}
