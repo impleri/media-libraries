@@ -17,12 +17,12 @@ load_plugin_textdomain( 'amazon-library', false, basename(dirname(__FILE__)) . '
 // Include frontend functionality
 require_once dirname(__FILE__) . '/options.php';
 require_once dirname(__FILE__) . '/products.php';
+require_once dirname(__FILE__) . '/shelves.php';
 require_once dirname(__FILE__) . '/roles.php';
-//require_once dirname(__FILE__) . '/reading.php';
 // require_once dirname(__FILE__) . '/template.php';
 // include_once dirname(__FILE__) . '/widgets.php';
 
-if ( is_admin() || defined('DOING_AJAX') ) {
+if (is_admin()) {
 	require_once dirname(__FILE__) . '/amazon.php';
 }
 
@@ -31,6 +31,7 @@ if ( is_admin() || defined('DOING_AJAX') ) {
  * Checks if required options (AWS keys) need to be set
  */
 function aml_check() {
+	global $wpdb;
 	add_option('aml_options', aml_default_options());
 	$options = get_option('aml_options');
 	$version = (empty($options['aml_version'])) ? 0 : $options['aml_version'];
@@ -39,8 +40,33 @@ function aml_check() {
 	if (version_compare($version, AML_VERSION, 'lt')) {
 // 		require_once dirname(__FILE__) . '/install.php';
 // 		aml_installer::process();
+// 		create_metadata_table('product');
+// 		$wpdb->aml_productmeta = $wpdb->prefix.'productmeta';
  		add_option('aml_options', aml_default_options());
 	}
+}
+
+function create_metadata_table($type) {
+	global $wpdb;
+	$table_name = $wpdb->prefix . $type . 'meta';
+
+	if (!empty ($wpdb->charset))
+		$charset_collate = "DEFAULT CHARACTER SET {$wpdb->charset}";
+	if (!empty ($wpdb->collate))
+		$charset_collate .= " COLLATE {$wpdb->collate}";
+
+	  $sql = "CREATE TABLE IF NOT EXISTS {$table_name} (
+	  	meta_id bigint(20) NOT NULL AUTO_INCREMENT,
+	  	{$type}_id bigint(20) NOT NULL default 0,
+
+		meta_key varchar(255) DEFAULT NULL,
+		meta_value longtext DEFAULT NULL,
+
+	  	UNIQUE KEY meta_id (meta_id)
+	) {$charset_collate};";
+
+	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+	dbDelta($sql);
 }
 
 /**

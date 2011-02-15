@@ -27,7 +27,7 @@ function aml_type_products() {
 	$args = array(
 			'description' => __('Product information and pictures fetched from Amazon. Similar to Amazon, an "official" review can be entered in the product page while individual users can also provide their own reviews in their shelves.'),
 			'rewrite' => array('slug' => "$slug_base/$slug_product", 'pages' => false, 'feeds' => false, 'with_front' => false),
-			'supports' => array('title', 'editor', 'revisions'),
+			'supports' => array('title'),
 			'register_meta_box_cb' => 'aml_product_boxes',
 			'capability_type' => 'product',
 			'has_archive' => $slug_base,
@@ -43,7 +43,7 @@ function aml_type_products() {
 /**
  * People taxonomy for products
  */
-function aml_taxonomy_people() {
+function aml_product_people() {
 	$options = get_option('aml_options', aml_default_options());
 	$slug_base = (empty($options['aml_slug_base'])) ? 'library' : $options['aml_slug_base'];
 	$slug_person = (empty($options['aml_slug_person'])) ? 'person' : $options['aml_slug_person'];
@@ -83,7 +83,7 @@ function aml_taxonomy_people() {
 /**
  * Generic taxonomy for products
  */
-function aml_taxonomy_tags() {
+function aml_product_tags() {
 	$options = get_option('aml_options', aml_default_options());
 	$slug_base = (empty($options['aml_slug_base'])) ? 'library' : $options['aml_slug_base'];
 	$slug_tag = (empty($options['aml_slug_tag'])) ? 'tag' : $options['aml_slug_tag'];
@@ -117,7 +117,6 @@ function aml_taxonomy_tags() {
 function aml_product_boxes() {
 	 add_meta_box('aml_product_search', __('Search Amazon', 'amazon-library'), 'aml_product_mb_search', 'aml_product', 'normal', 'high');
 	 add_meta_box('aml_product_meta', __('Additional Information', 'amazon-library'), 'aml_product_mb_meta', 'aml_product', 'side', 'high');
-	 add_action('save_post', 'aml_product_meta_postback');
 	 wp_enqueue_script( 'aml-product-script', plugins_url('/js/amazon.product.js', __FILE__) );
 	 wp_enqueue_style( 'aml-product-style', plugins_url('/css/amazon.product.css', __FILE__) );
 }
@@ -129,7 +128,7 @@ function aml_product_mb_search() {
 	$aml_categories = aml_amazon::$categories;
 ?>
 <div class="aml_search_box">
-	<select id="aml_type" name="aml_type">
+	<select id="aml_search_type" name="aml_search_type">
 	<?php foreach ($aml_categories as $cat) { ?>
 		<option value="<?php echo $cat; ?>"><?php _e($cat, 'amazon-library'); ?></option>
 	<?php } ?>
@@ -156,28 +155,28 @@ function aml_product_mb_meta() {
 	$image_preview = (empty($image)) ? '' : '<img src="' . $image . '" alt="preview" />';
 	$aml_categories = aml_amazon::$categories;
 ?>
-<input type="hidden" name="aml_product_meta_nonce" id="aml_product_meta_nonce" value="<?php echo wp_create_nonce( plugin_basename(__FILE__) ); ?>" />
+<input type="hidden" name="aml_product_meta_nonce" id="aml_product_meta_nonce" value="<?php echo wp_create_nonce( basename(__FILE__) ); ?>" />
 <div id="aml_image_preview"><?php echo $image_preview; ?></div>
 <div id="aml_imagewrap">
 	<label id="aml_image-prompt-text" for="aml_image"><?php _e('Link to image', 'amazon-library'); ?></label>
-	<input type="text" size="50" id="aml_image" name="aml_image" value="" autocomplete="off" />
+	<input type="text" size="50" id="aml_image" name="aml_image" value="<?php echo $image; ?>" autocomplete="off" />
 </div>
 
 <label for="aml_type"><?php _e('Amazon product type', 'amazon-library'); ?></label>
 <select id="aml_type" name="aml_type">
 <?php foreach ($aml_categories as $cat) { ?>
-	<option value="<?php echo $cat; ?>"><?php _e($cat, 'amazon-library'); ?></option>
+	<option value="<?php echo $cat; ?>"<?php selected($cat, $type); ?>><?php _e($cat, 'amazon-library'); ?></option>
 <?php } ?>
 </select>
 
 <div id="aml_asinwrap">
 	<label id="aml_asin-prompt-text" for="aml_asin"><?php _e('ASIN Number', 'amazon-library'); ?></label>
-	<input type="text" size="50" id="aml_asin" name="aml_asin" value="" autocomplete="off" />
+	<input type="text" size="50" id="aml_asin" name="aml_asin" value="<?php echo $asin; ?>" autocomplete="off" />
 </div>
 
 <div id="aml_linkwrap">
 	<label id="aml_link-prompt-text" for="aml_link"><?php _e('Amazon product link', 'amazon-library'); ?></label>
-	<input type="text" size="50" id="aml_link" name="aml_link" value="" autocomplete="off" />
+	<input type="text" size="50" id="aml_link" name="aml_link" value="<?php echo $link; ?>" autocomplete="off" />
 </div>
 <?php
 }
@@ -186,9 +185,8 @@ function aml_product_mb_meta() {
  * Callback to process posted metadata
  */
 function aml_product_meta_postback ($post_id) {
-	// verify nonce and auth
-	if ( !wp_verify_nonce($_POST["aml_product_meta_nonce"], plugin_basename(__FILE__)) || !current_user_can('edit_product', $post_id) ) {
-		return;
+	if (!wp_verify_nonce($_POST["aml_product_meta_nonce"], basename(__FILE__)) || 'aml_product' != $_POST['post_type']) {
+		return $post_id;
 	}
 
 	$image = $_POST['aml_image'];
@@ -204,28 +202,40 @@ function aml_product_meta_postback ($post_id) {
 	if(empty($image)) {
 		delete_post_meta($post_id, 'aml_image', $old_image);
 	}
-	else {
+	elseif (empty($old_image)) {
+		add_post_meta($post_id, 'aml_image', $image);
+	}
+	elseif ($image != $old_image) {
 		update_post_meta($post_id, 'aml_image', $image, $old_image);
 	}
 
 	if(empty($asin)) {
 		delete_post_meta($post_id, 'aml_asin', $old_asin);
 	}
-	else {
+	elseif (empty($old_asin)) {
+		add_post_meta($post_id, 'aml_asin', $asin);
+	}
+	elseif ($asin != $old_asin) {
 		update_post_meta($post_id, 'aml_asin', $asin, $old_asin);
 	}
 
 	if(empty($link)) {
 		delete_post_meta($post_id, 'aml_link', $old_link);
 	}
-	else {
+	elseif (empty($old_link)) {
+		add_post_meta($post_id, 'aml_link', $link);
+	}
+	elseif ($link != $old_link) {
 		update_post_meta($post_id, 'aml_link', $link, $old_link);
 	}
 
 	if(empty($type)) {
 		delete_post_meta($post_id, 'aml_type', $old_type);
 	}
-	else {
+	elseif (empty($old_type)) {
+		add_post_meta($post_id, 'aml_type', $type);
+	}
+	elseif ($type != $old_type) {
 		update_post_meta($post_id, 'aml_type', $type, $old_type);
 	}
 }
@@ -234,9 +244,11 @@ function aml_product_meta_postback ($post_id) {
  * Register additional columns for manage products page
  */
 function aml_product_register_columns($cols) {
-	$cols['people'] = 'People';
+	$cols['type'] = 'Category';
 	$cols['image'] = 'Image';
-	$cols['type'] = 'type';
+	$cols['people'] = 'People';
+	$cols['tags'] = 'Tags';
+	$cols['connect'] = 'Connections';
 	return $cols;
 }
 
@@ -247,11 +259,11 @@ function aml_product_display_columns ($name, $post_id) {
 	global $post;
 
 	switch ($name) {
-		case 'people':
-			$terms = get_the_term_list($post_id, 'aml_person', '', ', ');
-//			if (is_array($terms)) {
-				echo $terms; //implode(', ', $terms);
-	//		}
+		case 'type':
+			$type = get_post_meta($post_id, 'aml_type', true);
+			if (!empty($type)) {
+				_e($type, 'amazon-library');
+			}
 			break;
 		case 'image':
 			$link = get_post_meta($post_id, 'aml_link', true);
@@ -272,11 +284,15 @@ function aml_product_display_columns ($name, $post_id) {
 
 			echo '<div class="image">'.$img.'</div>';
 			break;
-		case 'type':
-			$type = get_post_meta($post_id, 'aml_type', true);
-			if (!empty($type)) {
-				_e($type, 'amazon-library');
-			}
+		case 'people':
+			$terms = get_the_term_list($post_id, 'aml_person', '', ', ');
+			echo $terms;
+			break;
+		case 'tags':
+			$terms = get_the_term_list($post_id, 'aml_tag', '', ', ');
+			echo $terms;
+			break;
+		case 'connect':
 			break;
 	}
 }
@@ -287,9 +303,8 @@ function aml_product_display_columns ($name, $post_id) {
 function aml_product_right_now() {
 	$num_posts = wp_count_posts('aml_product');
 	$num = number_format_i18n($num_posts->publish);
-	$text = _n('Product', 'Products', intval($num_posts->publish), 'amazon-libraries');
-	if (current_user_can( 'm
-	anage_products')) {
+	$text = _n('Product', 'Products', intval($num_posts->publish), 'amazon-library');
+	if (current_user_can('edit_products')) {
 		$num = '<a href="/wp-admin/edit.php?post_type=aml_product">' . $num . '</a>';
 		$text = '<a href="/wp-admin/edit.php?post_type=aml_product">' . $text . '</a>';
 	}
@@ -305,11 +320,12 @@ function aml_product_right_now() {
  */
 function aml_init_product() {
 	aml_type_products();
-	aml_taxonomy_people();
-	aml_taxonomy_tags();
+	aml_product_people();
+	aml_product_tags();
 	add_action('manage_aml_product_posts_custom_column', 'aml_product_display_columns', 10, 2);
 	add_action('manage_edit-aml_product_columns', 'aml_product_register_columns');
 	add_action('right_now_content_table_end', 'aml_product_right_now');
+	add_action('save_post', 'aml_product_meta_postback');
 }
 add_action('init', 'aml_init_product');
 
@@ -327,20 +343,5 @@ function aml_extra_rewrite() {
 	add_rewrite_rule("$wp_rewrite->root/$slug_base/([^/]+)/([^/]+)/", $wp_rewrite->index.'?aml_author=$matches[1]&aml_product=$matches[2]');
 	add_rewrite_rule("$wp_rewrite->root/$slug_base/([^/]+)/", $wp_rewrite->index.'?aml_author=$matches[1]');
 }
-
-/**
- * Meta Box for Amazon lookup
- * @deprecated
- */
-function aml_product_mb_lookup() {
-?>
-<div id="aml_lookup_stringwrap">
-	<label class="hide-if-no-js" style="" id="aml_lookup_string-prompt-text" for="aml_lookup_string"><?php _e('Enter ASIN', 'amazon-library'); ?></label>
-	<input type="text" size="50" id="aml_lookup_string" name="aml_lookup_string" value="" autocomplete="off" />
-</div>
-<div id='aml_lookup_button' class="button-primary"><?php _e('Lookup on Amazon', 'amazon-library') ?></div>
-<div id='aml_lookup_reset' class="button-primary"><?php _e('Reset Lookup', 'amazon-library') ?></div>
-<?php }
-
 
 ?>

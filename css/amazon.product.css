@@ -16,6 +16,7 @@
 .aml-item-image {}
 .aml-item-details {
 	float:right;
+	width: 75%;
 }
 .aml-item-title {
 	font-weight: bold;
@@ -31,7 +32,7 @@
 	border: 2px dashed gray;
 	background-color: white;
 	width: 30%;
-	margin: 15px auto;
+	margin: 15px 0;
 }
 .aml-hover {
 	background-color: yellow;

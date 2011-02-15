@@ -31,3 +31,15 @@
 .aml-hover {
 	background-color: yellow;
 }
+
+.aml_search_button {
+	float: left;
+}
+
+.aml_search_reset {
+	float: right;
+}
+
+.aml_search_box {
+	overflow: auto;
+}

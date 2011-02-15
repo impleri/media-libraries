@@ -2,7 +2,7 @@ jQuery(document).ready(function(jQuery) {
 	jQuery("#aml_search_button").click( function() {
 		var data = {
 			action: 'aml_amazon_search',
-			type: jQuery('#aml_type').val(),
+			type: jQuery('#aml_search_type').val(),
 			search: jQuery('#aml_search_string').val(),
 		};
 
@@ -44,12 +44,14 @@ jQuery(document).ready(function(jQuery) {
 		var amzasin = jQuery(this).parent().find('.aml-item-asin-number').text();
 		var link = jQuery(this).parent().find('.aml-item-link a').attr('href');
 		var image = jQuery(this).parent().parent().find('.aml-item-image img').attr('src');
+		var type = jQuery('#aml_search_type').val();
 
 		jQuery('#title').val(title);
 		jQuery('#new-tag-aml_person').val(people);
 		jQuery('#aml_image').val(image);
 		jQuery('#aml_asin').val(amzasin);
 		jQuery('#aml_link').val(link);
+		jQuery('#aml_type').val(type);
 
 		if (image !== '') {
 			jQuery('#aml_image_preview').html('<img src="' + image + '" />');
