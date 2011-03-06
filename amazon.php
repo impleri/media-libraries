@@ -4,10 +4,17 @@
  * @package amazon-library
  */
 
-require_once dirname(__FILE__) . '/lib/AmazonECS.class.php';
-
+/**
+ * AML Amazon Wrapper
+ *
+ * Wrapper class to the AmazonECS library. Acts as a simple middle layer between AML and AmazonECS.
+ * @static
+ */
 class aml_amazon {
 
+	/**
+	 * @param array Amazon domains that can be searched
+	 */
 	public static $domains = array(
 		'US' => 'United States',
 		'UK' => 'United Kingdom',
@@ -17,6 +24,9 @@ class aml_amazon {
 		'CA' => 'Canada',
 	);
 
+	/**
+	 * @param array Accepted Amazon categories
+	 */
 	public static $categories = array(
 		'Books',
 		'DVD',
@@ -24,16 +34,44 @@ class aml_amazon {
 		'VideoGames',
 	);
 
+	/**
+	 * @param array Image sizes
+	 */
+	public static $image_sizes = array(
+		'sm' => '._SL75_',
+		'med' => '._SL110_',
+		'lg' => '._SL160_',
+		'or' => '',
+	);
+
+	/**
+	 * @param string Template for HTML error messages
+	 */
 	public static $error = '<div class="">%s</div>';
 
+	/**
+	 * @param string URL to blank image if Amazon does not have one
+	 */
 	public static $blank_image = '';
 
+	/**
+	 * @param string URL prefix for Amazon images
+	 */
 	public static $image_base = 'http://ecx.images-amazon.com/images/I/';
 
-	public static function get() {
+	/**
+	 * AmazonECS Instance
+	 *
+	 * Gets and holds a single AmazonECS instance
+	 * @return object AmazonECS object
+	 */
+	public static function &get() {
 		static $amazon;
 
 		if (empty($amazon)) {
+			if (!class_exists('AmazonECS')) {
+				require dirname(__FILE__) . '/lib/AmazonECS.class.php';
+			}
 			$options = get_option('aml_options');
 			if (!empty($options['aml_amazon_id']) && !empty($options['aml_secret_key'])) {
 				$country = (empty($options['aml_domain'])) ? 'US' : strtoupper($options['aml_domain']);
@@ -46,6 +84,15 @@ class aml_amazon {
 		return $amazon;
 	}
 
+	/**
+	 * Amazon Item Search
+	 *
+	 * Searches Amazon for items matching the set descriptions
+	 * @param string Search terms
+	 * @param string Amazon category/product type (see aml_amazon::$categories for accepted terms)
+	 * @param int Page of results to return
+	 * @return string Parsed HTML from aml_amazon::parse for echo
+	 */
 	public static function search ($search, $type='Books', $page=1) {
 		$amazon = self::get();
 		if (!$amazon) {
@@ -78,6 +125,13 @@ class aml_amazon {
 		return $ret;
 	}
 
+	/**
+	 * Amazon Item Lookup
+	 *
+	 * Looks up an item on Amazon by ASIN/ISBN
+	 * @param string ASIN/ISBN number
+	 * @return string Parsed HTML from aml_amazon::parse for echo
+	 */
 	public static function lookup ($asin) {
 		$amazon = self::get();
 		if (!$amazon) {
@@ -100,6 +154,13 @@ class aml_amazon {
 		return $ret;
 	}
 
+	/**
+	 * Item Parser
+	 *
+	 * Parse an result item object into an HTML listing
+	 * @param object SimpleXML item node from AmazonECS response
+	 * @return string HTML for echo
+	 */
 	public static function parse ($item) {
 		$ret = '';
 
@@ -122,7 +183,7 @@ class aml_amazon {
 		}
 
 		if (!empty($people)) {
-			array_walk($people, 'aml_clean_name');
+			array_walk($people, array(self, 'clean_name'));
 			$ret .= '<div class="aml-item-people">' . __('People', 'amazon-library') . ': <span class="aml-item-people-names">' . implode(', ', $people) . '</span></div>';
 			}
 
@@ -139,50 +200,41 @@ class aml_amazon {
 		return '<div id="aml-'.$item->ASIN.'" class="aml-list-item">' . $ret . '</div>' . "\n";
 	}
 
-	function strip_image ($url) {
-		return str_replace(array(self::$image_base, '.jpg', '._SL75_', '._SL160'), '', $image);
+	/**
+	 * Strips commas from name for compatibility with taxonomy entry
+	 * @param string value Name to clean
+	 * @param string key Unused
+	 * @return string Cleaned name
+	 */
+	function clean_name (&$name, $key='') {
+		str_replace(array(',', '  '), array('', ' '), $name);
 	}
 
+	/**
+	 * Amazon Image URL Destructor
+	 *
+	 * Reduces a URL to an Amazon image to the name hash for dynamic sizing of images
+	 * @param string URL
+	 * @return string Image name hash
+	 */
+	function strip_image ($url) {
+		$arr = array_merge(array_values(self::$image_sizes), array(self::$image_base, '.jpg'));
+		return str_replace($arr, '', $url);
+	}
+
+	/**
+	 * Amazon Image URL Constructor
+	 *
+	 * Creates a URL to an Amazon Image from a hash, sized at the currently configured size
+	 * @param string Image name hash
+	 * @param string Image size
+	 * @return string URL to image
+	 */
 	function build_image ($image, $size='med') {
-		if (0 == strpos('http', $image)) {
+		if (0 === strpos('http', $image)) {
 			return $image;
 		}
 
-		switch ($size) {
-			case 'lg':
-				$post = '160';
-				break;
-			case 'sm':
-				$post = '75';
-				break;
-			case 'med':
-			default:
-				$post = '110';
-				break;
-		}
-		return self::$image_base . $image . '._SL' . $post . '_.jpg';
+		return self::$image_base . $image . self::$image_sizes[$size] . '.jpg';
 	}
 }
-
-// strips commas from name
-function aml_clean_name (&$item, $key='') {
-	str_replace(array(',', '  '), array('', ' '), $item);
-}
-
-// handle js callbacks
-function aml_ajax_callback() {
-	// validate posted data
-	$search = (isset($_POST['search'])) ? $_POST['search'] : '';
-	$type = (isset($_POST['type'])) ? $_POST['type'] : '';
-	$lookup = (isset($_POST['lookup'])) ? $_POST['lookup'] : '';
-
-	// run amazon query
-	$ret = (!empty($lookup)) ? aml_amazon::lookup($lookup) : aml_amazon::search($search, $type);
-
-	//return results
-	echo $ret;
-	die;
-}
-
-add_action('wp_ajax_aml_amazon_search', 'aml_ajax_callback');
-//add_action('wp_ajax_aml_amazon_lookup', 'aml_ajax_callback')

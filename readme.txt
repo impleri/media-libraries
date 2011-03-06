@@ -43,6 +43,12 @@ My suggestion to those who are having trouble is to open up the template (such a
 
 == Changelog ==
 
+= 0.9.2 =
+* Third alpha release
+* Added feature to use multiple shelves
+* Added feature to handle multiple users
+* Uses auth privileges and WP roles to restrict/permit add/manage items rather than user levels
+
 = 0.9.1 =
 * Second public alpha release
 * Product search, add, edit, etc actually work as intended.
@@ -61,12 +67,6 @@ My suggestion to those who are having trouble is to open up the template (such a
 
 
 == Roadmap ==
-
-= 0.9.2 =
-* Third alpha release
-* Added feature to use multiple shelves
-* Added feature to handle multiple users
-* Uses auth privileges and WP roles to restrict/permit add/manage items rather than user levels
 
 = 0.9.3 =
 * First beta release

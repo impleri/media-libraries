@@ -27,12 +27,12 @@ function aml_type_shelves() {
 	$args = array(
 			'description' => __('Users can organise shelves to show which products they use (e.g. a DVD shelf, a book shelf, etc).'),
 			'rewrite' => array('slug' => "$slug_base/$slug_shelf", 'pages' => true, 'feeds' => true, 'with_front' => false),
-			'show_in_menu' => 'edit.php?post_type=aml_products',
+			'show_in_menu' => 'edit.php?post_type=aml_product',
 			'capability_type' => array('shelf', 'shelves'),
 			'register_meta_box_cb' => 'aml_shelf_boxes',
 			'supports' => array('title', 'author'),
 			'map_meta_cap' => true,
-			'menu_position' => 11,
+			'menu_position' => 2,
 			'labels' => $labels,
 			'query_var' => true,
 			'public' => true,
@@ -45,9 +45,10 @@ function aml_type_shelves() {
  */
 function aml_shelf_boxes() {
 	 add_meta_box('aml_shelf_list', __('Products on Shelf', 'amazon-library'), 'aml_shelf_mb_list', 'aml_shelf', 'normal', 'high');
-	 add_meta_box('aml_shelf_search', __('Search Products', 'amazon-library'), 'aml_shelf_mb_search', 'aml_shelf', 'normal', 'low');
-	 wp_enqueue_script( 'aml-product-script', plugins_url('/js/amazon.shelf.js', __FILE__) );
-	 wp_enqueue_style( 'aml-product-style', plugins_url('/css/amazon.shelf.css', __FILE__) );
+	 add_meta_box('aml_shelf_add', __('Add Product to Shelf', 'amazon-library'), 'aml_shelf_mb_add', 'aml_shelf', 'normal', 'low');
+	 wp_enqueue_script('suggest');
+	 wp_enqueue_script( 'aml-shelf-script', plugins_url('/js/amazon.shelf.js', __FILE__) );
+	 wp_enqueue_style( 'aml-s-style', plugins_url('/css/amazon.shelf.css', __FILE__) );
 }
 
 /**
@@ -65,12 +66,12 @@ function aml_shelf_mb_list($post) {
 /**
  * Meta Box for product search
  */
-function aml_shelf_mb_search() {
+function aml_shelf_mb_add() {
 ?>
 <div class="aml_search_box">
 	<div id="aml_search_stringwrap">
 		<label class="hide-if-no-js" style="" id="aml_search_string-prompt-text" for="aml_search_string"><?php _e('Search for...', 'amazon-library'); ?></label>
-		<input type="text" size="50" id="aml_search_string" name="aml_search_string" value="" autocomplete="on" />
+		<input type="text" size="50" id="aml_search_string" name="aml_search_string" value="" autocomplete="off" />
 	</div>
 	<div id='aml_search_button' class="button-primary"><?php _e('Search Products', 'amazon-library') ?></div>
 	<div id='aml_search_reset' class="button-primary"><?php _e('Reset Search', 'amazon-library') ?></div>
@@ -208,6 +209,65 @@ function aml_shelf_ajax_callback() {
 	die;
 }
 
+function aml_shelf_add_product() {
+	check_ajax_referer( 'taxinlineeditnonce', '_inline_edit' );
+
+	$taxonomy = sanitize_key( $_POST['taxonomy'] );
+	$tax = get_taxonomy( $taxonomy );
+	if ( ! $tax )
+		die( '0' );
+
+	if ( ! current_user_can( $tax->cap->edit_terms ) )
+		die( '-1' );
+
+	set_current_screen( 'edit-' . $taxonomy );
+
+	$wp_list_table = _get_list_table('WP_Terms_List_Table');
+
+	if ( ! isset($_POST['tax_ID']) || ! ( $id = (int) $_POST['tax_ID'] ) )
+		die(-1);
+
+	$tag = get_term( $id, $taxonomy );
+	$_POST['description'] = $tag->description;
+
+	$updated = wp_update_term($id, $taxonomy, $_POST);
+	if ( $updated && !is_wp_error($updated) ) {
+		$tag = get_term( $updated['term_id'], $taxonomy );
+		if ( !$tag || is_wp_error( $tag ) ) {
+			if ( is_wp_error($tag) && $tag->get_error_message() )
+				die( $tag->get_error_message() );
+			die( __('Item not updated.') );
+		}
+
+		echo $wp_list_table->single_row( $tag );
+	} else {
+		if ( is_wp_error($updated) && $updated->get_error_message() )
+			die( $updated->get_error_message() );
+		die( __('Item not updated.') );
+	}
+
+	exit;
+}
+
+function aml_shelf_live_search() {
+	$products = get_post_type_object('aml_product');
+	if ( ! $products )
+		die( '0' );
+	if ( ! current_user_can('assign_products') )
+		die( '-1' );
+
+	$s = stripslashes( $_GET['q'] );
+	$s = trim( $s );
+	if ( strlen( $s ) < 2 )
+		die; // require 2 chars for matching
+
+	$results = $wpdb->get_col( $wpdb->prepare( "SELECT p.name FROM $wpdb->posts AS p WHERE p.post_type = 'aml_product' AND p.name LIKE (%s)", '%' . like_escape( $s ) . '%' ) );
+
+	echo join( $results, "\n" );
+	die;
+}
+
+add_action('wp_ajax_ajax-product-search', 'aml_shelf_live_search');
 add_action('wp_ajax_aml_shelf_search', 'aml_ajax_callback');
 add_action('wp_ajax_aml_shelf_page', 'aml_ajax_callback');
 

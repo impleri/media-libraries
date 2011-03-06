@@ -6,7 +6,8 @@
  * $Date$
  */
 
-// Product capabilities we care about
+/* For developers:
+Capabilities we care about
 $product_capabilities = array(
 	'edit_products',
 	'edit_published_products',
@@ -28,6 +29,7 @@ $review_capabilities = array(
 	'delete_private_products',
 	'delete_published_products',
 );
+*/
 
 /**
  * Add auths to regular WP roles
@@ -104,3 +106,4 @@ function aml_meta_cap ($caps, $cap, $user_id, $args) {
 }
 
 // add_filter('map_meta_cap', 'aml_meta_cap', 10, 4);
+aml_capabilities();
