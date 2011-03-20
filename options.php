@@ -17,47 +17,52 @@ function aml_default_options() {
 		'aml_domain' => 'us',
 		'aml_image_size' => 'med',
 		'aml_per_page' => 20,
+		'aml_multi_user' => 1,
+		'aml_use_tags' => 1,
+		'aml_use_categories' => 0,
 		'aml_slug_base' => 'library',
 		'aml_slug_product' => 'product',
 		'aml_slug_person' => 'person',
 		'aml_slug_tag' => 'tag',
 		'aml_slug_user' => 'user',
+		'aml_slug_shelf' => 'shelf',
 		'aml_version' => AML_VERSION,
 	);
 }
 
-/**
- * Initialises options for Now Reading by inserting missing options and registering with WP Settings API
- */
-function aml_options_init() {
-	$default_options = aml_default_options();
-	$options = get_option('aml_options', aml_default_options());
-	$options = (false === $options) ? array() : $options;
-	$options = array_merge($default_options, $options);
-	update_option('aml_options', $options);
-
-	register_setting('amazon_library', 'aml_options', 'aml_options_validate');
-
-	add_options_page(__('Amazon Media Libraries', 'amazon-library'), __('Amazon Media Libraries', 'amazon-library'), 'manage_options', 'aml_options', 'aml_options_page');
-
-	add_settings_section('aml_options_amazon', __('Amazon Settings', 'amazon-library'), 'aml_options_amazon', 'aml_options');
-	add_settings_section('aml_options_display', __('Display Settings', 'amazon-library'), 'aml_options_display', 'aml_options');
-
-	// Amazon field definitions
-	add_settings_field('aml_amazon_id', __('Amazon Web Services Access Key ID', 'amazon-library'), 'aml_amazon_id_field', 'aml_options', 'aml_options_amazon');
-	add_settings_field('aml_secret_key', __('Amazon Web Services Secret Access Key', 'amazon-library'), 'aml_secret_key_field', 'aml_options', 'aml_options_amazon');
-	add_settings_field('aml_associate', __('Your Amazon Associates ID', 'amazon-library'), 'aml_associate_field', 'aml_options', 'aml_options_amazon');
-	add_settings_field('aml_domain', __('Amazon domain to use', 'amazon-library'), 'aml_domain_field', 'aml_options', 'aml_options_amazon');
-	add_settings_field('aml_image_size', __('Image size to use', 'amazon-library'), 'aml_image_size_field', 'aml_options', 'aml_options_display');
-
-	// Display field definitions
-	add_settings_field('aml_per_page', __('Books per page', 'amazon-library'), 'aml_per_page_field', 'aml_options', 'aml_options_display');
-	add_settings_field('aml_slug_base', __('Permalink base', 'amazon-library'), 'aml_slug_base_field', 'aml_options', 'aml_options_display');
-	add_settings_field('aml_slug_product', __('Product base', 'amazon-library'), 'aml_slug_product_field', 'aml_options', 'aml_options_display');
-	add_settings_field('aml_slug_person', __('Person base', 'amazon-library'), 'aml_slug_person_field', 'aml_options', 'aml_options_display');
-	add_settings_field('aml_slug_tag', __('Tag base', 'amazon-library'), 'aml_slug_tag_field', 'aml_options', 'aml_options_display');
+function aml_update_meta ($field, $post, $new=null) {
+	$old = get_post_meta($post, $field, true);
+	if(empty($new)) {
+		delete_post_meta($post, $field, $old);
+	}
+	elseif (empty($old)) {
+		add_post_meta($post, $field, $new);
+	}
+	elseif ($new != $old) {
+		update_post_meta($post, $field, $new, $old);
+	}
 }
-add_action('admin_menu', 'aml_options_init');
+
+function aml_get_option ($key='', $def=null) {
+	static $options;
+	static $defaults;
+
+	if (!is_array($defaults)) {
+		$defaults = aml_default_options();
+	}
+
+	if (!is_array($options)) {
+		$options = get_option('aml_options', $defaults);
+	}
+
+	if (false === strpos($key, 'aml_')) {
+		$key = 'aml_' . $key;
+	}
+
+	$def = (is_null($def) && isset($defaults[$key])) ? $defaults[$key] : $def;
+
+	return (isset($options[$key])) ? $options[$key] : $def;
+}
 
 /**
  * Creates the options admin page and manages the updating of options.
@@ -210,3 +215,37 @@ function aml_slug_tag_field() {
 <p><?php _e('Tag prepended for Now Reading tag URLs. Default is tag.', 'amazon-library'); ?></p>
 <p><?php _e('NB: Only Alpha-numerics and dashes are allowed.', 'amazon-library'); ?></p>
 <?php }
+
+/**
+ * Initialises options for Now Reading by inserting missing options and registering with WP Settings API
+ */
+function aml_options_init() {
+	$default_options = aml_default_options();
+	$options = get_option('aml_options', aml_default_options());
+	$options = (false === $options) ? array() : $options;
+	$options = array_merge($default_options, $options);
+	update_option('aml_options', $options);
+
+	register_setting('amazon_library', 'aml_options', 'aml_options_validate');
+
+	add_options_page(__('Amazon Media Libraries', 'amazon-library'), __('Amazon Media Libraries', 'amazon-library'), 'manage_options', 'aml_options', 'aml_options_page');
+
+	add_settings_section('aml_options_amazon', __('Amazon Settings', 'amazon-library'), 'aml_options_amazon', 'aml_options');
+	add_settings_section('aml_options_display', __('Display Settings', 'amazon-library'), 'aml_options_display', 'aml_options');
+
+	// Amazon field definitions
+	add_settings_field('aml_amazon_id', __('Amazon Web Services Access Key ID', 'amazon-library'), 'aml_amazon_id_field', 'aml_options', 'aml_options_amazon');
+	add_settings_field('aml_secret_key', __('Amazon Web Services Secret Access Key', 'amazon-library'), 'aml_secret_key_field', 'aml_options', 'aml_options_amazon');
+	add_settings_field('aml_associate', __('Your Amazon Associates ID', 'amazon-library'), 'aml_associate_field', 'aml_options', 'aml_options_amazon');
+	add_settings_field('aml_domain', __('Amazon domain to use', 'amazon-library'), 'aml_domain_field', 'aml_options', 'aml_options_amazon');
+	add_settings_field('aml_image_size', __('Image size to use', 'amazon-library'), 'aml_image_size_field', 'aml_options', 'aml_options_display');
+
+	// Display field definitions
+	add_settings_field('aml_per_page', __('Books per page', 'amazon-library'), 'aml_per_page_field', 'aml_options', 'aml_options_display');
+	add_settings_field('aml_slug_base', __('Permalink base', 'amazon-library'), 'aml_slug_base_field', 'aml_options', 'aml_options_display');
+	add_settings_field('aml_slug_product', __('Product base', 'amazon-library'), 'aml_slug_product_field', 'aml_options', 'aml_options_display');
+	add_settings_field('aml_slug_person', __('Person base', 'amazon-library'), 'aml_slug_person_field', 'aml_options', 'aml_options_display');
+	add_settings_field('aml_slug_tag', __('Tag base', 'amazon-library'), 'aml_slug_tag_field', 'aml_options', 'aml_options_display');
+}
+
+add_action('admin_menu', 'aml_options_init');

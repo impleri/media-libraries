@@ -7,7 +7,7 @@
 /**
  * Our custom product post_type
  */
-function aml_type_products() {
+function aml_type_product() {
 	$options = get_option('aml_options', aml_default_options());
 	$slug_base = (empty($options['aml_slug_base'])) ? 'library' : $options['aml_slug_base'];
 	$slug_product = (empty($options['aml_slug_product'])) ? 'product' : $options['aml_slug_product'];
@@ -78,37 +78,6 @@ function aml_product_people() {
 		'labels' => $labels,
 	);
 	register_taxonomy('aml_person','aml_product', $args);
-}
-
-/**
- * Generic taxonomy for products
- */
-function aml_product_tags() {
-	$options = get_option('aml_options', aml_default_options());
-	$slug_base = (empty($options['aml_slug_base'])) ? 'library' : $options['aml_slug_base'];
-	$slug_tag = (empty($options['aml_slug_tag'])) ? 'tag' : $options['aml_slug_tag'];
-
-	$labels = array(
-		'name' => _x('Tags', 'taxonomy general name', 'amazon-library'),
-		'singular_name' => _x('Tag', 'taxonomy singular name', 'amazon-library'),
-	);
-
-	$capabilities = array(
-		'manage_terms' => 'edit_products',
-		'edit_terms' => 'edit_products',
-		'delete_terms' => 'edit_products',
-		'assign_terms' => 'edit_products',
-	);
-
-	$args = array(
-		'rewrite' => array('slug' => "$slug_base/$slug_tag", 'pages' => true, 'feeds' => false, 'with_front' => false),
-		'capabilities' => $capabilities,
-		'query_var' => 'aml_tag',
-	 	'hierarchical' => false,
-		'labels' => $labels,
-		'public' => true,
-	);
-	register_taxonomy( 'aml_tag', 'aml_product', $args);
 }
 
 /**
@@ -194,50 +163,10 @@ function aml_product_meta_postback ($post_id) {
 	$type = $_POST['aml_type'];
 	$link = $_POST['aml_link'];
 
-	$old_asin = get_post_meta($post_id, 'aml_asin', true);
-	$old_link = get_post_meta($post_id, 'aml_link', true);
-	$old_type = get_post_meta($post_id, 'aml_type', true);
-	$old_image = get_post_meta($post_id, 'aml_image', true);
-
-	if(empty($image)) {
-		delete_post_meta($post_id, 'aml_image', $old_image);
-	}
-	elseif (empty($old_image)) {
-		add_post_meta($post_id, 'aml_image', $image);
-	}
-	elseif ($image != $old_image) {
-		update_post_meta($post_id, 'aml_image', $image, $old_image);
-	}
-
-	if(empty($asin)) {
-		delete_post_meta($post_id, 'aml_asin', $old_asin);
-	}
-	elseif (empty($old_asin)) {
-		add_post_meta($post_id, 'aml_asin', $asin);
-	}
-	elseif ($asin != $old_asin) {
-		update_post_meta($post_id, 'aml_asin', $asin, $old_asin);
-	}
-
-	if(empty($link)) {
-		delete_post_meta($post_id, 'aml_link', $old_link);
-	}
-	elseif (empty($old_link)) {
-		add_post_meta($post_id, 'aml_link', $link);
-	}
-	elseif ($link != $old_link) {
-		update_post_meta($post_id, 'aml_link', $link, $old_link);
-	}
-
-	if(empty($type)) {
-		delete_post_meta($post_id, 'aml_type', $old_type);
-	}
-	elseif (empty($old_type)) {
-		add_post_meta($post_id, 'aml_type', $type);
-	}
-	elseif ($type != $old_type) {
-		update_post_meta($post_id, 'aml_type', $type, $old_type);
-	}
+	aml_update_meta('aml_asin', $post_id, $asin);
+	aml_update_meta('aml_type', $post_id, $type);
+	aml_update_meta('aml_link', $post_id, $link);
+	aml_update_meta('aml_image', $post_id, $image);
 }
 
 /**
@@ -319,16 +248,13 @@ function aml_product_right_now() {
  * Register the actions for our product post_type
  */
 function aml_init_product() {
-	aml_type_products();
+	aml_type_product();
 	aml_product_people();
-	aml_product_tags();
 	add_action('manage_aml_product_posts_custom_column', 'aml_product_display_columns', 10, 2);
 	add_action('manage_edit-aml_product_columns', 'aml_product_register_columns');
 	add_action('right_now_content_table_end', 'aml_product_right_now');
 	add_action('save_post', 'aml_product_meta_postback');
 }
-add_action('init', 'aml_init_product');
-
 
 /**
  * Extra rewrite rules. Kept around for reference until stable release

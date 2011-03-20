@@ -8,9 +8,8 @@
  * Our custom shelf post_type
  */
 function aml_type_shelves() {
-	$options = get_option('aml_options', aml_default_options());
-	$slug_base = (empty($options['aml_slug_base'])) ? 'library' : $options['aml_slug_base'];
-	$slug_shelf = (empty($options['aml_slug_shelf'])) ? 'shelf' : $options['aml_slug_shelf'];
+	$slug_base = aml_get_option('aml_slug_base');
+	$slug_shelf = aml_get_option('aml_slug_shelf');
 
 	$labels = array(
 		'name' => _x('Shelves', 'post type general name', 'amazon-library'),
@@ -41,6 +40,37 @@ function aml_type_shelves() {
 }
 
 /**
+ * Generic taxonomy for products
+ */
+function aml_taxonomy_shelf() {
+	$slug_base = aml_get_option('aml_slug_base');
+	$slug_shelf = aml_get_option('aml_slug_shelf');
+
+	$labels = array(
+		'name' => _x('Shelves', 'taxonomy general name', 'amazon-library'),
+		'singular_name' => _x('Shelf', 'taxonomy singular name', 'amazon-library'),
+		'popular_items' => null,
+	);
+
+	$capabilities = array(
+		'manage_terms' => 'manage_shelves',
+		'edit_terms' => 'edit_shelves',
+		'delete_terms' => 'edit_shelves',
+		'assign_terms' => 'assign_shelves',
+	);
+
+	$args = array(
+		'rewrite' => array('slug' => "$slug_base/$slug_shelf", 'pages' => true, 'feeds' => false, 'with_front' => false),
+		'capabilities' => $capabilities,
+		'query_var' => 'aml_shelf',
+	 	'hierarchical' => false,
+		'labels' => $labels,
+		'public' => true,
+	);
+	register_taxonomy( 'aml_shelf', 'aml_review', $args);
+}
+
+/**
  * Callback from aml_type_shelves() to generate meta boxes on an edit page
  */
 function aml_shelf_boxes() {
@@ -48,7 +78,7 @@ function aml_shelf_boxes() {
 	 add_meta_box('aml_shelf_add', __('Add Product to Shelf', 'amazon-library'), 'aml_shelf_mb_add', 'aml_shelf', 'normal', 'low');
 	 wp_enqueue_script('suggest');
 	 wp_enqueue_script( 'aml-shelf-script', plugins_url('/js/amazon.shelf.js', __FILE__) );
-	 wp_enqueue_style( 'aml-s-style', plugins_url('/css/amazon.shelf.css', __FILE__) );
+	 wp_enqueue_style( 'aml-shelf-style', plugins_url('/css/amazon.shelf.css', __FILE__) );
 }
 
 /**
@@ -154,26 +184,7 @@ function aml_shelf_page ($args) {
 	$html = '';
 	if (is_array($products)) {
 		foreach ($products as $prod) {
-			$image = get_post_meta($prod->ID, 'aml_image', true);
-			$link = get_post_meta($prod->ID, 'aml_link', true);
-			$asin  = get_post_meta($prod->ID, 'aml_asin', true);
-			$people = get_the_term_list($prod->ID, 'aml_person', '<div class="aml_product-people">', ', ', '</div>');
-			$tags = get_the_term_list($prod->ID, 'aml_tag', '<div class="aml_product-tags">', ', ', '</div>');
-
-			$html .= '<li class="aml_product">';
-			// there should always be *some* image
-			$html .= '<img src="'.$image.'" />';
-			$html .= '<div class="aml-details"><div class="aml_product-title">' . $prod->title . '</div>';
-			$html .= $people . $tags;
-			// Amazon ASIN and link are optional
-			if (!empty($asin)) {
-				$html .= '<div class="aml_product-link">';
-				if (!empty($link)) {
-				$asin = '<a href="'.$link.'">'.$asin.'</a>';
-				}
-				$html .= $asin . '</div>';
-			}
-			$html .= "</li>\n";
+			$html .= product_shelf_image($prod, '<li class="aml_product">', '</li>');
 		}
 	}
 	return (empty($html)) ? __('No products found on the self.', 'amazon-library') : '<ul>' . $html . $paginate . '</ul>';
@@ -194,82 +205,6 @@ function &aml_get_products ($args=null) {
 	$get_posts->query($r);
 	return $get_posts;
 }
-
-// handle js callbacks
-function aml_shelf_ajax_callback() {
-	// validate posted data
-	$page = (isset($_POST['page'])) ? $_POST['page'] : '';
-	$search = (isset($_POST['search'])) ? $_POST['search'] : '';
-
-	// run amazon query
-	$ret = (!empty($search)) ? aml_shelf_search_products($search) : aml_shelf_page($page);
-
-	//return results
-	echo $ret;
-	die;
-}
-
-function aml_shelf_add_product() {
-	check_ajax_referer( 'taxinlineeditnonce', '_inline_edit' );
-
-	$taxonomy = sanitize_key( $_POST['taxonomy'] );
-	$tax = get_taxonomy( $taxonomy );
-	if ( ! $tax )
-		die( '0' );
-
-	if ( ! current_user_can( $tax->cap->edit_terms ) )
-		die( '-1' );
-
-	set_current_screen( 'edit-' . $taxonomy );
-
-	$wp_list_table = _get_list_table('WP_Terms_List_Table');
-
-	if ( ! isset($_POST['tax_ID']) || ! ( $id = (int) $_POST['tax_ID'] ) )
-		die(-1);
-
-	$tag = get_term( $id, $taxonomy );
-	$_POST['description'] = $tag->description;
-
-	$updated = wp_update_term($id, $taxonomy, $_POST);
-	if ( $updated && !is_wp_error($updated) ) {
-		$tag = get_term( $updated['term_id'], $taxonomy );
-		if ( !$tag || is_wp_error( $tag ) ) {
-			if ( is_wp_error($tag) && $tag->get_error_message() )
-				die( $tag->get_error_message() );
-			die( __('Item not updated.') );
-		}
-
-		echo $wp_list_table->single_row( $tag );
-	} else {
-		if ( is_wp_error($updated) && $updated->get_error_message() )
-			die( $updated->get_error_message() );
-		die( __('Item not updated.') );
-	}
-
-	exit;
-}
-
-function aml_shelf_live_search() {
-	$products = get_post_type_object('aml_product');
-	if ( ! $products )
-		die( '0' );
-	if ( ! current_user_can('assign_products') )
-		die( '-1' );
-
-	$s = stripslashes( $_GET['q'] );
-	$s = trim( $s );
-	if ( strlen( $s ) < 2 )
-		die; // require 2 chars for matching
-
-	$results = $wpdb->get_col( $wpdb->prepare( "SELECT p.name FROM $wpdb->posts AS p WHERE p.post_type = 'aml_product' AND p.name LIKE (%s)", '%' . like_escape( $s ) . '%' ) );
-
-	echo join( $results, "\n" );
-	die;
-}
-
-add_action('wp_ajax_ajax-product-search', 'aml_shelf_live_search');
-add_action('wp_ajax_aml_shelf_search', 'aml_ajax_callback');
-add_action('wp_ajax_aml_shelf_page', 'aml_ajax_callback');
 
 /**
  * Register the actions for our product post_type
