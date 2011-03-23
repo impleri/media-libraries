@@ -6,16 +6,6 @@
  * $Date$
  */
 
-// $nr_statuses = apply_filters('nr_statuses', array(
-//     'unread'	=> __('Yet to read', NRTD),
-//     'onhold'	=> __('On Hold', NRTD),
-//     'reading'	=> __('Currently reading', NRTD),
-//     'rereading'	=> __('Currently re-reading', NRTD),
-//     'read'		=> __('Finished', NRTD)
-// ));
-
-// NOTE: use register_post_status for the statuses!
-
 /**
  * Review custom post_type
  */
@@ -44,18 +34,40 @@ function aml_type_review() {
 			'description' => __('A single review/use of a product (e.g. reading a book, watching a DVD, listening to music, etc)'),
 			'supports' => array('title', 'author', 'editor', 'revisions'),
 			'rewrite' => array('slug' => "$slug_base/$slug_review", 'pages' => false, 'feeds' => false, 'with_front' => false),
-// 			'has_archive' => $slug_base,
 			'register_meta_box_cb' => 'aml_review_mb',
-			'query_var' => true,
 			'public_queryable' => true,
-			'public' => true,
+			'hierarchical' => true,
+			'query_var' => true,
 			'show_ui' => true,
+			'public' => true,
 		);
 	register_post_type('aml_review', $args);
 }
 
 /**
- * Generic taxonomy for reviews
+ * Review custom stati
+ */
+function aml_review_stati() {
+	register_post_status( 'added', array(
+		'label'       => _x('Yet to use', 'post', 'amazon-library'),
+		'public'      => true,
+	) );
+	register_post_status( 'onhold', array(
+		'label'       => _x('On Hold', 'post', 'amazon-library'),
+		'public'      => true,
+	) );
+	register_post_status( 'using', array(
+		'label'       => _x('Currently using', 'post', 'amazon-library'),
+		'public'      => true,
+	) );
+	register_post_status( 'finished', array(
+		'label'       => _x('Finished', 'post', 'amazon-library'),
+		'public'      => true,
+	) );
+}
+
+/**
+ * Generic taxonomy for reviews (all of this just to rename 'post tags' to simply 'tags'!)
  */
 function aml_review_tags() {
 	$slug_base = aml_get_option('slug_base');
@@ -85,93 +97,65 @@ function aml_review_tags() {
 }
 
 /**
- * Meta-boxes for review page
+ * Register meta-box for review page
  */
 function aml_review_mb() {
-	 add_meta_box('aml_review_meta_product', __('Product', 'amazon-library'), 'aml_review_product', 'aml_review', 'side', 'high'); // should only show up if a product isn't specified
- 	 add_meta_box('aml_review_meta_details', __('Reading Details', 'amazon-library'), 'aml_review_meta', 'aml_review', 'side', 'normal'); // start date, stop date, status, rating
+	 add_meta_box('aml_review_meta', __('Product', 'amazon-library'), 'aml_review_meta', 'aml_review', 'side', 'high');
 }
 
 /**
- * Product select (and rating) meta-box
+ * Review details meta-box
  */
-function aml_review_product() {
-	global $post;
-
-	// Product ID can come from three locations: GET (if clicked from product list), Meta (if already saved), or AJAX (if searching on page)
-	$product = 0;
-	$meta_product = intval(get_post_meta($post->ID, 'aml_product', true));
-	$post_product = intval($_REQUEST['aml_product']);
-
-	// check for saved product first
-	if ($meta_product > 1) {
-		$product = $meta_product;
-	}
-	// then check for product in GET
-	elseif ($post_product > 1) {
-		$product = $post_product;
-	}
-
+function aml_review_meta ($post) {
 	$rating = get_post_meta($post->ID, 'aml_rating', true);
-
-	// Verify
-	echo'<input type="hidden" name="ch_link_url_noncename" id="ch_link_url_noncename" value="'.wp_create_nonce( plugin_basename(__FILE__) ).'" />';
-?>
-<div id="aml_product-thumb"></div>
-<div id="aml_product_search">
-	<label id="aml_image-prompt-text" for="aml_image"><?php _e('Link to image', 'amazon-library'); ?></label>
-	<input type="text" size="50" id="aml_image" name="aml_image" value="" autocomplete="off" />
-</div>
-<?php review_stars(); ?>
-<?php }
-
-/**
- * Product usage meta-box
- */
-function aml_review_meta() {
-	global $post;
-
-	$post_type = $post->post_type;
-	$post_type_object = get_post_type_object($post_type);
-	$can_publish = current_user_can($post_type_object->cap->publish_posts);
-
 	$added = get_post_meta($post->ID, 'aml_added', true);
-	$began = get_post_meta($post->ID, 'aml_started', true);
+	$started = get_post_meta($post->ID, 'aml_started', true);
 	$finish = get_post_meta($post->ID, 'aml_finished', true);
+	// todo: need to add post_status!!
 
-	// Verify
-	echo'<input type="hidden" name="ch_link_url_noncename" id="ch_link_url_noncename" value="'.wp_create_nonce( plugin_basename(__FILE__) ).'" />';
+	$post_type_object = get_post_type_object($post->post_type);
+	$can_publish = current_user_can($post_type_object->cap->publish_posts);
+	$pages = wp_dropdown_pages(array('post_type' => 'aml_product', 'selected' => $post->post_parent, 'name' => 'parent_id', 'show_option_none' => __('(no parent)'), 'sort_column'=> 'menu_order, post_title', 'echo' => 0));
 
+	echo'<input type="hidden" name="aml_review_product_nonce" id="aml_review_product_nonce" value="'.wp_create_nonce(basename(__FILE__)).'" />';
+
+	if ( ! empty($pages) ) { ?>
+		<p><strong><?php _e('Parent') ?></strong></p>
+		<label class="screen-reader-text" for="parent_id"><?php _e('Review', 'amazon-library'); ?></label>
+		<?php echo $pages; ?>
+<?php } // end empty pages check
+	?>
+	<div id="aml_product-thumb"></div>
+	<?php
+	review_stars();
 	aml_show_date($added, 'added', $can_publish);
-	aml_show_date($began, 'started', $can_publish);
+	aml_show_date($started, 'started', $can_publish);
 	aml_show_date($finish, 'finished', $can_publish);
-?>
-<div id="aml_linkwrap">
-	<label id="aml_link-prompt-text" for="aml_link"><?php _e('Amazon product link', 'amazon-library'); ?></label>
-	<input type="text" size="50" id="aml_link" name="aml_link" value="" autocomplete="off" />
-</div>
-<?php }
+}
 
 function aml_review_mb_postback ($post_id) {
 	global $post;
 
 	// Verify
-	if ( !wp_verify_nonce( $_POST["ch_link_url_noncename"], plugin_basename(__FILE__) )) {
+	if ( !wp_verify_nonce( $_POST["aml_review_product_nonce"], basename(__FILE__)) || !current_user_can( 'edit_review', $post_id ) ) {
 		return $post_id;
 	}
-	if ( !current_user_can( 'edit_product', $post_id )) {
-		return $post_id;
-	}
+	$statuses = get_available_post_statuses('aml_review');
 
-	$data = $_POST['ch_link_url'];
+	// need to validate/clean
+	$rating = $_REQUEST['aml_rating'];
+	$added = $_REQUEST['aml_added'];
+	$started = $_REQUEST['aml_started'];
+	$finished = $_REQUEST['aml_finished'];
+	// these should be done automatically by WP
+// 	$status = $_REQUEST['post_status'];
+// 	$parent = $_REQUEST['parent_id'];
 
 	// New, Update, and Delete
-	if(get_post_meta($post_id, 'ch_link_url') == "")
-		add_post_meta($post_id, 'ch_link_url', $data, true);
-	elseif($data != get_post_meta($post_id, 'ch_link_url', true))
-		update_post_meta($post_id, 'ch_link_url', $data);
-	elseif($data == "")
-		delete_post_meta($post_id, 'ch_link_url', get_post_meta($post_id, 'ch_link_url', true));
+	aml_update_meta('aml_rating', $post_id, $rating);
+	aml_update_meta('aml_added', $post_id, $added);
+	aml_update_meta('aml_started', $post_id, $started);
+	aml_update_meta('aml_finished', $post_id, $finished);
 }
 
 /**
@@ -236,6 +220,7 @@ function aml_review_display_columns ($name, $post_id) {
  */
 function aml_init_review() {
 	aml_type_review();
+	aml_review_stati();
 	if (aml_get_option('use_tags')) {
 		aml_review_tags();
 	}
