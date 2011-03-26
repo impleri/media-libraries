@@ -2,8 +2,7 @@
 /**
  * media shelves
  * @package amazon-library
- * $Rev$
- * $Date$
+ * @author Christopher Roussel <christopher@impleri.net>
  */
 
 /**
@@ -105,6 +104,8 @@ function aml_review_mb() {
 
 /**
  * Review details meta-box
+ *
+ * @param object WP_post
  */
 function aml_review_meta ($post) {
 	$rating = get_post_meta($post->ID, 'aml_rating', true);
@@ -133,6 +134,11 @@ function aml_review_meta ($post) {
 	aml_show_date($finish, 'finished', $can_publish);
 }
 
+/**
+ * Review details meta-box postback
+ *
+ * @param int Post ID
+ */
 function aml_review_mb_postback ($post_id) {
 	global $post;
 
@@ -140,7 +146,7 @@ function aml_review_mb_postback ($post_id) {
 	if ( !wp_verify_nonce( $_POST["aml_review_product_nonce"], basename(__FILE__)) || !current_user_can( 'edit_review', $post_id ) ) {
 		return $post_id;
 	}
-	$statuses = get_available_post_statuses('aml_review');
+	$stati = get_available_post_statuses('aml_review');
 
 	// need to validate/clean
 	$rating = $_REQUEST['aml_rating'];
@@ -159,7 +165,10 @@ function aml_review_mb_postback ($post_id) {
 }
 
 /**
- * Register additional columns for manage products page
+ * Register additional columns for manage reviews page
+ *
+ * @param array Columns
+ * @return array Columns with our additions
  */
 function aml_review_register_columns($cols) {
 	$cols['type'] = 'Category';
@@ -172,6 +181,9 @@ function aml_review_register_columns($cols) {
 
 /**
  * Display additional columns for manage products page
+ *
+ * @param string Column name
+ * @param int Post ID
  */
 function aml_review_display_columns ($name, $post_id) {
 	global $post;

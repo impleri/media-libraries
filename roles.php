@@ -2,34 +2,8 @@
 /**
  * Various meta-data boxes and callbacks
  * @package amazon-library
- * $Rev$
- * $Date$
+ * @author Christopher Roussel <christopher@impleri.net>
  */
-
-/* For developers:
-Capabilities we care about
-$product_capabilities = array(
-	'edit_products',
-	'edit_published_products',
-	'publish_products',
-	'delete_products',
-	'read_products',
-);
-
-$review_capabilities = array(
-	'read_reviews',
-	'read_private_products',
-	'edit_products',
-	'edit_others_products',
-	'edit_private_products',
-	'edit_published_products',
-	'publish_products',
-	'delete_products',
-	'delete_others_products',
-	'delete_private_products',
-	'delete_published_products',
-);
-*/
 
 /**
  * Add auths to regular WP roles
@@ -65,6 +39,12 @@ function aml_capabilities() {
 
 /**
  * Map meta capabilities to primitive capabilities
+ *
+ * @param array Capabilities to check
+ * @param string Capability
+ * @param int User ID
+ * @param array $args All arguments
+ * @return array Capabilities to check (modified)
  */
 function aml_meta_cap ($caps, $cap, $user_id, $args) {
 	// only check capabilities we deal with
@@ -104,6 +84,3 @@ function aml_meta_cap ($caps, $cap, $user_id, $args) {
 	}
 	return $caps;
 }
-
-// add_filter('map_meta_cap', 'aml_meta_cap', 10, 4);
-aml_capabilities();

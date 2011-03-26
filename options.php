@@ -2,8 +2,7 @@
 /**
  * Adds our admin menus, and some stylesheets and JavaScript to the admin head.
  * @package amazon-library
- * $Rev$
- * $Date$
+ * @author Christopher Roussel <christopher@impleri.net>
  */
 
 /**
@@ -17,9 +16,9 @@ function aml_default_options() {
 		'aml_domain' => 'us',
 		'aml_image_size' => 'med',
 		'aml_per_page' => 20,
-		'aml_multi_user' => 1,
 		'aml_use_tags' => 1,
 		'aml_use_categories' => 0,
+		'aml_use_shelves' => 1,
 		'aml_slug_base' => 'library',
 		'aml_slug_product' => 'product',
 		'aml_slug_person' => 'person',
@@ -30,6 +29,13 @@ function aml_default_options() {
 	);
 }
 
+/**
+ * Shortcut for handling meta updates
+ *
+ * @param string name of meta field
+ * @param int post id for meta
+ * @param mixed new value (default is null)
+ */
 function aml_update_meta ($field, $post, $new=null) {
 	$old = get_post_meta($post, $field, true);
 	if(empty($new)) {
@@ -43,6 +49,13 @@ function aml_update_meta ($field, $post, $new=null) {
 	}
 }
 
+/**
+ * Shortcut for getting option from the aml_options array
+ *
+ * @param string name of option
+ * @param mixed default value override (if null, will give from aml_default_options)
+ * @return mixed option value
+ */
 function aml_get_option ($key='', $def=null) {
 	static $options;
 	static $defaults;
@@ -65,7 +78,7 @@ function aml_get_option ($key='', $def=null) {
 }
 
 /**
- * Creates the options admin page and manages the updating of options.
+ * AML options page display
  */
 function aml_options_page() {
 ?>
@@ -85,30 +98,34 @@ function aml_options_page() {
 
 /**
  * Validates posted options for Now Reading
+ *
+ * @param array $_POST data passed from WP
+ * @return array validated options
  */
 function aml_options_validate ($aml_post) {
 	$options = get_option('aml_options');
 	$defaults = aml_default_options();
 	$valid = array();
-	//TODO: Better validation
+	//TODO: more validation!
 
 	// Amazon fields
-	$valid['aml_amazon_id'] = ($aml_post['aml_amazon_id']) ? preg_replace('/[^[:alnum:]]/', '', $aml_post['aml_amazon_id']) : null;
-	$valid['aml_secret_key'] = ($aml_post['aml_secret_key']) ? preg_replace('/[^[\+[:alnum:]]]/', '', $aml_post['aml_secret_key']) : null;
-	$valid['aml_associate'] = ($aml_post['aml_associate']) ? preg_replace('/[^[\-[:alnum:]]]/', '', $aml_post['aml_associate']) : null;
-	$valid['aml_domain'] = ($aml_post['aml_domain']) ? preg_replace('/[^[:alpha:]]/', '', $aml_post['aml_domain']) : null;
+	$valid['aml_amazon_id'] = ($aml_post['aml_amazon_id']) ? sanitize_text_field($aml_post['aml_amazon_id']) : null;
+	$valid['aml_secret_key'] = ($aml_post['aml_secret_key']) ? sanitize_text_field($aml_post['aml_secret_key']) : null;
+	$valid['aml_associate'] = ($aml_post['aml_associate']) ? sanitize_text_field($aml_post['aml_associate']) : null;
+	$valid['aml_domain'] = ($aml_post['aml_domain']) ? sanitize_text_field($aml_post['aml_domain']) : null;
 	$valid['aml_image_size'] = in_array($aml_post['aml_image_size'], array('sm', 'med', 'lg')) ? $aml_post['aml_image_size'] : null;
 
 	// Display fields
 	$valid['aml_per_page'] = ($aml_post['aml_per_page']) ? intval($aml_post['aml_per_page']) : null;
-	$valid['aml_slug_base'] = ($aml_post['aml_slug_base']) ? str_replace('#', '', $aml_post['aml_slug_base']) : null;
-	$valid['aml_slug_product'] = ($aml_post['aml_slug_product']) ? str_replace('#', '', $aml_post['aml_slug_product']) : null;
-	$valid['aml_slug_person'] = ($aml_post['aml_slug_person']) ? str_replace('#', '', $aml_post['aml_slug_person']) : null;
-	$valid['aml_slug_tag'] = ($aml_post['aml_slug_tag']) ? str_replace('#', '', $aml_post['aml_slug_tag']) : null;
-	$valid['aml_slug_user'] = (!empty($aml_post['aml_slug_user'])) ? str_replace('#', '', $aml_post['aml_slug_user']) : null;
+	$valid['aml_slug_base'] = ($aml_post['aml_slug_base']) ? sanitize_text_field($aml_post['aml_slug_base']) : null;
+	$valid['aml_slug_product'] = ($aml_post['aml_slug_product']) ? sanitize_text_field($aml_post['aml_slug_product']) : null;
+	$valid['aml_slug_person'] = ($aml_post['aml_slug_person']) ? sanitize_text_field($aml_post['aml_slug_person']) : null;
+	$valid['aml_slug_tag'] = ($aml_post['aml_slug_tag']) ? sanitize_text_field($aml_post['aml_slug_tag']) : null;
+	$valid['aml_slug_user'] = ($aml_post['aml_slug_user']) ? sanitize_text_field($aml_post['aml_slug_user']) : null;
 
-	// Throw an error if no AWS info
+	// merge (defaults, current, and new values) into one array
 	$valid = array_merge($defaults, $options, $valid);
+	// Throw an error if no AWS info
 	if (empty($valid['aml_amazon_id'])) {
 		add_settings_error('aml_options', 'amazon-library', __('Amazon ID option is required for Now Reading to function properly!', 'amazon-library'));
 	}
@@ -118,103 +135,144 @@ function aml_options_validate ($aml_post) {
 	return $valid;
 }
 
-// Section header texts
+/**
+ * Amazon options header display
+ */
 function aml_options_amazon() {
 ?>
 <p><?php _e('The following settings determine what Now Reading will retrieve from Amazon.', 'amazon-library'); ?></p>
 <?php }
 
+/**
+ * Display options header display
+ */
 function aml_options_display() {
 ?>
 <p><?php _e('These settings determine how libraries will be displayed.', 'amazon-library'); ?></p>
 <?php }
 
-// Amazon field boxes
+/**
+ * Amazon AWS ID field display
+ */
 function aml_amazon_id_field() {
-	$options = get_option('aml_options');
 ?>
-<input type="text" size="50" id="aml_amazon_id" name="aml_options[aml_amazon_id]" value="<?php echo htmlentities($options['aml_amazon_id'], ENT_QUOTES, "UTF-8"); ?>" />
+<input type="text" size="50" id="aml_amazon_id" name="aml_options[aml_amazon_id]" value="<?php echo htmlentities(aml_get_option('aml_amazon_id'), ENT_QUOTES, "UTF-8"); ?>" />
 <p><?php echo sprintf(__('Required to add books from Amazon.  It is free to sign up. Register <a href="%s">here</a>.', 'amazon-library'), 'https://aws-portal.amazon.com/gp/aws/developer/registration/index.html'); ?></p>
 <?php }
 
+/**
+ * Amazon AWS secret field display
+ */
 function aml_secret_key_field() {
-	$options = get_option('aml_options');
 ?>
-<input type="text" size="50" id="aml_secret_key" name="aml_options[aml_secret_key]" value="<?php echo htmlentities($options['aml_secret_key'], ENT_QUOTES, "UTF-8"); ?>" />
+<input type="text" size="50" id="aml_secret_key" name="aml_options[aml_secret_key]" value="<?php echo htmlentities(aml_get_option('aml_secret_key'), ENT_QUOTES, "UTF-8"); ?>" />
 <p><?php echo sprintf(__('Required to add books from Amazon.  Found at the same site as above. Register <a href="%s">here</a>.', 'amazon-library'), 'https://aws-portal.amazon.com/gp/aws/developer/registration/index.html'); ?></p>
 <?php }
 
+/**
+ * Amazon associate ID field display
+ */
 function aml_associate_field() {
-	$options = get_option('aml_options');
 ?>
-<input type="text" size="50" id="aml_associate" name="aml_options[aml_associate]" value="<?php echo htmlentities($options['aml_associate'], ENT_QUOTES, "UTF-8"); ?>" />
-<p><?php _e('If you choose to link to a product page on Amazon.com using the <code>product_url()</code> template tag - as the default template does - then you can earn commission if your visitors then purchase products.'); ?></p>
+<input type="text" size="50" id="aml_associate" name="aml_options[aml_associate]" value="<?php echo htmlentities(aml_get_option('aml_associate'), ENT_QUOTES, "UTF-8"); ?>" />
+<p><?php _e('If you choose to link to a product page on Amazon using the url meta - as the default template does - then you can earn commission if your visitors then purchase products.'); ?></p>
 <p><?php echo sprintf(__('If you do not have an Amazon Associates ID, you can either <a href="%s">get one</a>.', 'amazon-library'), 'http://associates.amazon.com/'); ?></p>
 <?php }
 
+/**
+ * Amazon domain field display
+ */
 function aml_domain_field() {
-	$options = get_option('aml_options');
+	$option = aml_get_option('aml_domain');
 	$aml_domains = aml_amazon::$domains;
 ?>
 <select id="aml_domain" name="aml_options[aml_domain]">
 <?php foreach ($aml_domains as $domain => $country) { ?>
-<option value="<?php echo $domain; ?>"<?php selected($domain, $options['aml_domain']); ?>><?php echo $country; ?></option>
+<option value="<?php echo $domain; ?>"<?php selected($domain, $option); ?>><?php echo $country; ?></option>
 <?php } ?>
 </select>
-<p><?php echo sprintf(__('If you choose to link to a product page on Amazon.com using the <code>product_url()</code> template tag, you can specify which country-specific Amazon site to link to. Now Reading will also use this domain when searching.', 'amazon-library'), "https://aws-portal.amazon.com/gp/aws/developer/registration/index.html"); ?></p>
+<p><?php _e('Country-specific Amazon site to use for searching and product links', 'amazon-library'); ?></p>
 <p><?php _e('NB: If you have country-specific books in your catalogue and then change your domain setting, some old links might stop working.', 'amazon-library'); ?></p>
 <?php }
 
+/**
+ * Amazon image size field display
+ */
 function aml_image_size_field() {
-	$options = get_option('aml_options');
-	$sizes = array('sm' => 'Small', 'med' => 'Medium', 'lg' => 'Large');
+	$option = aml_get_option('aml_image_size');
+	$sizes = aml_amazon::$img_size_text;
 ?>
 <select id="aml_image_size" name="aml_options[aml_image_size]">
 <?php foreach ($sizes as $size => $name) { ?>
-<option value="<?php echo $size; ?>"<?php selected($size, $options['aml_image_size']); ?>><?php _e($name); ?></option>
+<option value="<?php echo $size; ?>"<?php selected($size, $option); ?>><?php _e($name); ?></option>
 <?php } ?>
 </select>
 <p><?php _e('NB: This change will only be applied to books you add from this point onwards.'); ?></p>
 <?php }
 
-// Display
+/**
+ * Products per page field display
+ */
 function aml_per_page_field() {
-	$options = get_option('aml_options');
 ?>
-<input type="text" size="2" id="aml_per_page" name="aml_options[aml_per_page]" value="<?php echo intval($options['aml_per_page']); ?>" />
+<input type="text" size="2" id="aml_per_page" name="aml_options[aml_per_page]" value="<?php echo intval(aml_get_option('aml_per_page')); ?>" />
 <?php }
 
+/**
+ * Template for slug field display
+ *
+ * @param string Option key
+ * @param string Option description
+ */
+function aml_slug_field ($option, $text) {
+?>
+<input type="text" size="50" id="<?php echo $option; ?>" name="aml_options[<?php echo $option; ?>]" value="<?php echo aml_get_option($option); ?>" />
+<p><?php _e($text, 'amazon-library'); ?></p>
+<p><?php _e('NB: Only Alpha-numerics and dashes are allowed.', 'amazon-library'); ?></p>
+<?php }
+
+/**
+ * Base slug field
+ */
 function aml_slug_base_field() {
-	$options = get_option('aml_options');
-?>
-<input type="text" size="50" id="aml_slug_base" name="aml_options[aml_slug_base]" value="<?php echo $options['aml_slug_base']; ?>" />
-<p><?php _e('Base tag for all Now Reading pages. Default is library', 'amazon-library'); ?></p>
-<p><?php _e('NB: Only Alpha-numerics and dashes are allowed.', 'amazon-library'); ?></p>
-<?php }
+	aml_slug_field('aml_slug_base', 'Base tag for all Amazon Media Libraries pages. Default is library.');
+}
 
+/**
+ * Product slug field display
+ */
 function aml_slug_product_field() {
-	$options = get_option('aml_options');
-?>
-<input type="text" size="50"id="aml_slug_product" name="aml_options[aml_slug_product]" value="<?php echo $options['aml_slug_product']; ?>" />
-<p><?php _e('Tag prepended for product URLs. Default is book.', 'amazon-library'); ?></p>
-<p><?php _e('NB: Only Alpha-numerics and dashes are allowed.', 'amazon-library'); ?></p>
-<?php }
+	aml_slug_field('aml_slug_product', 'Tag prepended for product URLs. Default is book.');
+}
 
+/**
+ * Person slug field display
+ */
 function aml_slug_person_field() {
-	$options = get_option('aml_options');
-?>
-<input type="text" size="50" id="aml_slug_person" name="aml_options[aml_slug_person]" value="<?php echo $options['aml_slug_person']; ?>" />
-<p><?php _e('Tag prepended for person URLs (e.g. authors, editors, actors, directors, etc). Default is person.', 'amazon-library'); ?></p>
-<p><?php _e('NB: Only Alpha-numerics and dashes are allowed.', 'amazon-library'); ?></p>
-<?php }
+	aml_slug_field('aml_slug_person', 'Tag prepended for person URLs (e.g. authors, editors, actors, directors, etc). Default is person.');
+}
 
+/**
+ * Tag slug field display
+ */
 function aml_slug_tag_field() {
+	aml_slug_field('aml_slug_tag', 'Tag prepended for tag URLs. Default is tag.');
+}
+
+/**
+ * User slug field display
+ */
+function aml_slug_user_field() {
+	aml_slug_field('aml_slug_user', 'Tag prepended for user URLs. Default is user.');
 	$options = get_option('aml_options');
-?>
-<input type="text" size="50" id="aml_slug_tag" name="aml_options[aml_slug_tag]" value="<?php echo $options['aml_slug_tag']; ?>" />
-<p><?php _e('Tag prepended for Now Reading tag URLs. Default is tag.', 'amazon-library'); ?></p>
-<p><?php _e('NB: Only Alpha-numerics and dashes are allowed.', 'amazon-library'); ?></p>
-<?php }
+}
+
+/**
+ * Shelf slug field display
+ */
+function aml_slug_shelf_field() {
+	aml_slug_field('aml_slug_shelf', 'Tag prepended for shelf URLs. Default is shelf.');
+}
 
 /**
  * Initialises options for Now Reading by inserting missing options and registering with WP Settings API
@@ -246,6 +304,6 @@ function aml_options_init() {
 	add_settings_field('aml_slug_product', __('Product base', 'amazon-library'), 'aml_slug_product_field', 'aml_options', 'aml_options_display');
 	add_settings_field('aml_slug_person', __('Person base', 'amazon-library'), 'aml_slug_person_field', 'aml_options', 'aml_options_display');
 	add_settings_field('aml_slug_tag', __('Tag base', 'amazon-library'), 'aml_slug_tag_field', 'aml_options', 'aml_options_display');
+	add_settings_field('aml_slug_user', __('User base', 'amazon-library'), 'aml_slug_user_field', 'aml_options', 'aml_options_display');
+	add_settings_field('aml_slug_shelf', __('Shelf base', 'amazon-library'), 'aml_slug_shelf_field', 'aml_options', 'aml_options_display');
 }
-
-add_action('admin_menu', 'aml_options_init');

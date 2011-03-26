@@ -11,7 +11,7 @@ Allows you to display books, DVDs, CDs, any kind of media found on Amazon that y
 
 **WARNING**: This project is still in development and is currently not ready for production use. Please install at your own risk.
 
-Amazon Media Libraries is a complete rewrite of the Now Reading series of plugins ([Rob Miller's Now Reading plugin](http://robm.me.uk/projects/plugins/wordpress/now-reading/ "Original Now Reading Plugin"), [Ben Gunnink's Now Reading Reloaded plugin] (http://wordpress.org/extend/plugins/now-reading-reloaded/ "Now Reading Reloaded Plugin"), and [Zack Ajmal's Now Watching plugin] (http://wordpress.org/extend/plugins/now-watching/ "Now Watching Plugin") . Users with WordPress 2.6 and below should either upgrade or use Rob Miiller's original plugin. Users with WordPress 2.6 - 2.9 should use the Now Reading Reloaded plugin.
+Amazon Media Libraries is a complete rewrite of the Now Reading series of plugins ([Rob Miller's Now Reading plugin](http://robm.me.uk/projects/plugins/wordpress/now-reading/ "Original Now Reading Plugin"), [Ben Gunnink's Now Reading Reloaded plugin](http://wordpress.org/extend/plugins/now-reading-reloaded/ "Now Reading Reloaded Plugin"), and [Zack Ajmal's Now Watching plugin](http://wordpress.org/extend/plugins/now-watching/ "Now Watching Plugin")). Users with WordPress 2.6 and below should either upgrade or use Rob Miiller's original plugin. Users with WordPress 2.6 - 2.9 should use the Now Reading Reloaded plugin.
 
 With Amazon Media Libraries, you can manage multiple libraries/shelves of your current media, keeping track of when you've last used them, and how often you have used them.
 
@@ -44,8 +44,8 @@ My suggestion to those who are having trouble is to open up the template (such a
 == Changelog ==
 
 = 0.9.2 =
-* Third alpha release
-* Added feature to use multiple shelves
+* First beta release
+* (Re-)added feature to track (multiple) readings/viewings/reviews
 * Added feature to handle multiple users
 * Uses auth privileges and WP roles to restrict/permit add/manage items rather than user levels
 
@@ -69,20 +69,20 @@ My suggestion to those who are having trouble is to open up the template (such a
 == Roadmap ==
 
 = 0.9.3 =
-* First beta release
-* (Re-)added feature to track (multiple) readings/viewings/reviews
+* Second beta release
+* Added feature to use multiple shelves
 
 = 0.9.4 =
-* Second beta release
+* Third beta release
 * (Re-)added template files for k2 and TwentyTen templates
 
 = 0.9.5 =
-* Third beta release
+* First release candidate
 * Widgets
 * UI cleanup
 
 = 0.9.6 =
-* First release candidate
+* Second release candidate
 * Import from Now Reading, Now Reading Reloaded, and Now Watching plugins
 
 

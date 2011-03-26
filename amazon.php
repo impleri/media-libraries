@@ -2,6 +2,7 @@
 /**
  * Wrapper for Amazon ECS library
  * @package amazon-library
+ * @author Christopher Roussel <christopher@impleri.net>
  */
 
 /**
@@ -42,6 +43,16 @@ class aml_amazon {
 		'med' => '._SL110_',
 		'lg' => '._SL160_',
 		'or' => '',
+	);
+
+	/**
+	 * @param array Image sizes
+	 */
+	public static $img_size_text = array(
+		'sm' => 'Small',
+		'med' => 'Medium',
+		'lg' => 'Large',
+		'or' => 'Original',
 	);
 
 	/**
@@ -230,7 +241,7 @@ class aml_amazon {
 	 * @param string Image size
 	 * @return string URL to image
 	 */
-	function build_image ($image, $size='med') {
+	public function build_image ($image, $size='med') {
 		if (0 === strpos('http', $image)) {
 			return $image;
 		}

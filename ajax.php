@@ -2,6 +2,7 @@
 /**
  * AJAX functions
  * @package amazon-library
+ * @author Christopher Roussel <christopher@impleri.net>
  */
 
 // handle js callbacks

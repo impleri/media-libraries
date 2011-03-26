@@ -2,9 +2,10 @@
 /**
  * Template functions for products
  * @package amazon-library
+ * @author Christopher Roussel <christopher@impleri.net>
  */
 
-// data
+// Still not working and subject to change
 
 /**
  * Retrieve post title.

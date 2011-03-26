@@ -2,7 +2,10 @@
 /**
  * Template functions for review pages
  * @package amazon-library
+ * @author Christopher Roussel <christopher@impleri.net>
  */
+
+// Also not finished and subject to change
 
 /**
  * Retrieve the time at which the specified event occured

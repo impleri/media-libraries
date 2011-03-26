@@ -2,6 +2,7 @@
 /**
  * Product custom_type and taxonomies
  * @package amazon-library
+ * @author Christopher Roussel <christopher@impleri.net>
  */
 
 /**
@@ -91,7 +92,7 @@ function aml_product_boxes() {
 }
 
 /**
- * Meta Box for Amazon search
+ * Meta-box for Amazon search
  */
 function aml_product_mb_search() {
 	$aml_categories = aml_amazon::$categories;
@@ -113,7 +114,7 @@ function aml_product_mb_search() {
 <?php }
 
 /**
- * Meta Box for additional meta-data (ASIN, link, image)
+ * Meta-box for additional meta-data (ASIN, link, image)
  */
 function aml_product_mb_meta() {
 	global $post;
@@ -152,6 +153,8 @@ function aml_product_mb_meta() {
 
 /**
  * Callback to process posted metadata
+ *
+ * @param int Post ID
  */
 function aml_product_meta_postback ($post_id) {
 	if (!wp_verify_nonce($_POST["aml_product_meta_nonce"], basename(__FILE__)) || 'aml_product' != $_POST['post_type']) {
@@ -171,8 +174,11 @@ function aml_product_meta_postback ($post_id) {
 
 /**
  * Register additional columns for manage products page
+ *
+ * @param array Columns
+ * @return array Columns (with additions)
  */
-function aml_product_register_columns($cols) {
+function aml_product_register_columns ($cols) {
 	$cols['type'] = 'Category';
 	$cols['image'] = 'Image';
 	$cols['people'] = 'People';
@@ -183,6 +189,9 @@ function aml_product_register_columns($cols) {
 
 /**
  * Display additional columns for manage products page
+ *
+ * @param string Column name
+ * @param int Post ID
  */
 function aml_product_display_columns ($name, $post_id) {
 	global $post;
