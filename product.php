@@ -39,6 +39,8 @@ function aml_type_product() {
 			'public' => true,
 		);
 	register_post_type('aml_product', $args);
+	add_filter('archive_template', 'aml_product_archive_template');
+	add_filter('single_template', 'aml_product_single_template');
 }
 
 /**
@@ -79,6 +81,7 @@ function aml_product_people() {
 		'labels' => $labels,
 	);
 	register_taxonomy('aml_person','aml_product', $args);
+	add_filter('taxonomy_template', 'aml_person_taxonomy_template');
 }
 
 /**

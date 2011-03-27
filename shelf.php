@@ -37,37 +37,8 @@ function aml_type_shelves() {
 			'public' => true,
 		);
 	register_post_type('aml_shelf', $args);
-}
-
-/**
- * Generic taxonomy for products
- */
-function aml_taxonomy_shelf() {
-	$slug_base = aml_get_option('aml_slug_base');
-	$slug_shelf = aml_get_option('aml_slug_shelf');
-
-	$labels = array(
-		'name' => _x('Shelves', 'taxonomy general name', 'amazon-library'),
-		'singular_name' => _x('Shelf', 'taxonomy singular name', 'amazon-library'),
-		'popular_items' => null,
-	);
-
-	$capabilities = array(
-		'manage_terms' => 'manage_shelves',
-		'edit_terms' => 'edit_shelves',
-		'delete_terms' => 'edit_shelves',
-		'assign_terms' => 'assign_shelves',
-	);
-
-	$args = array(
-		'rewrite' => array('slug' => "$slug_base/$slug_shelf", 'pages' => true, 'feeds' => false, 'with_front' => false),
-		'capabilities' => $capabilities,
-		'query_var' => 'aml_shelf',
-	 	'hierarchical' => false,
-		'labels' => $labels,
-		'public' => true,
-	);
-	register_taxonomy( 'aml_shelf', 'aml_review', $args);
+	add_filter('archive_template', 'aml_shelf_archive_template');
+	add_filter('single_template', 'aml_shelf_single_template');
 }
 
 /**

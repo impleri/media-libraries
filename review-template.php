@@ -5,6 +5,36 @@
  * @author Christopher Roussel <christopher@impleri.net>
  */
 
+/**
+ * Wrapper to template hack for archive-aml_review
+ *
+ * @param string found template
+ * @return string path to template
+ */
+function aml_review_archive_template ($template) {
+	return aml_insert_type_template ($template, 'aml_review', 'archive');
+}
+
+/**
+ * Wrapper to template hack for single-aml_review
+ *
+ * @param string found template
+ * @return string path to template
+ */
+function aml_review_single_template ($template) {
+	return aml_insert_type_template ($template, 'aml_review', 'single');
+}
+
+/**
+ * Wrapper to template hack for taxonomy-aml_tag
+ *
+ * @param string found template
+ * @return string path to template
+ */
+function aml_tags_taxonomy_template ($template) {
+	return aml_insert_tax_template ($template, 'aml_tag');
+}
+
 // Also not finished and subject to change
 
 /**

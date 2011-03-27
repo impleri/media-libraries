@@ -41,6 +41,8 @@ function aml_type_review() {
 			'public' => true,
 		);
 	register_post_type('aml_review', $args);
+	add_filter('archive_template', 'aml_review_archive_template');
+	add_filter('single_template', 'aml_review_single_template');
 }
 
 /**
@@ -93,6 +95,7 @@ function aml_review_tags() {
 		'public' => true,
 	);
 	register_taxonomy( 'aml_tag', 'aml_review', $args);
+	add_filter('taxonomy_template', 'aml_tags_taxonomy_template');
 }
 
 /**

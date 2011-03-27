@@ -78,6 +78,62 @@ function aml_get_option ($key='', $def=null) {
 }
 
 /**
+ * Hack to use our templates (for post_type pages)
+ *
+ * @param string found template (passed from the filter)
+ * @param string post_type to load
+ * @param string type of page (archive or single)
+ * @return string path to template
+ */
+function aml_insert_type_template ($template, $type, $page='archive') {
+	$post_type = get_query_var('post_type');
+
+	// not ours to worry about!
+	if ($type != $post_type) {
+		return $template;
+	}
+
+	$file = $page.'-'.$type.'.php';
+
+	// template not found in theme folder, so insert our default
+	if ($file != basename($template)) {
+		$path = dirname(__FILE__) . '/templates/' . $file;
+		if ( file_exists($path)) {
+			return $path;
+		}
+	}
+
+	return $template;
+}
+
+/**
+ * Hack to use our templates
+ *
+ * @param string found template
+ * @return string path to template
+ */
+function aml_insert_tax_template ($template, $type, $page='taxonomy') {
+	$term = get_queried_object();
+
+	// not ours to worry about!
+	if ($type != $term->taxonomy) {
+		return $template;
+	}
+
+	$file = $page.'-'.$type.'.php';
+
+	// template not found in theme folder, so insert our default
+	if ($file != basename($template)) {
+		$path = dirname(__FILE__) . '/templates/' . $file;
+		if ( file_exists($path)) {
+			return $path;
+		}
+	}
+
+	return $template;
+}
+
+/**
  * AML options page display
  */
 function aml_options_page() {
