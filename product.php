@@ -1,12 +1,12 @@
 <?php
 /**
- * Product custom_type and taxonomies
+ * product custom_type and related taxonomies
  * @package amazon-library
  * @author Christopher Roussel <christopher@impleri.net>
  */
 
 /**
- * Our custom product post_type
+ * custom product post_type
  */
 function aml_type_product() {
 	$options = get_option('aml_options', aml_default_options());
@@ -44,9 +44,9 @@ function aml_type_product() {
 }
 
 /**
- * People taxonomy for products
+ * people taxonomy for products
  */
-function aml_product_people() {
+function aml_tax_people() {
 	$options = get_option('aml_options', aml_default_options());
 	$slug_base = (empty($options['aml_slug_base'])) ? 'library' : $options['aml_slug_base'];
 	$slug_person = (empty($options['aml_slug_person'])) ? 'person' : $options['aml_slug_person'];
@@ -85,19 +85,20 @@ function aml_product_people() {
 }
 
 /**
- * Callback from aml_type_products() to generate meta boxes on an edit page
+ * callback from registering aml_product to generate meta boxes on an edit page
  */
 function aml_product_boxes() {
-	 add_meta_box('aml_product_search', __('Search Amazon', 'amazon-library'), 'aml_product_mb_search', 'aml_product', 'normal', 'high');
-	 add_meta_box('aml_product_meta', __('Additional Information', 'amazon-library'), 'aml_product_mb_meta', 'aml_product', 'side', 'high');
+	 add_meta_box('aml_product_search', __('Search Amazon', 'amazon-library'), 'aml_mb_amazon_search', 'aml_product', 'normal', 'high');
+	 add_meta_box('aml_product_meta', __('Additional Information', 'amazon-library'), 'aml_mb_product_meta', 'aml_product', 'side', 'high');
 	 wp_enqueue_script( 'aml-product-script', plugins_url('/js/amazon.product.js', __FILE__) );
 	 wp_enqueue_style( 'aml-product-style', plugins_url('/css/amazon.product.css', __FILE__) );
 }
 
 /**
- * Meta-box for Amazon search
+ * meta-box for Amazon search
+ * @todo push html to template functions
  */
-function aml_product_mb_search() {
+function aml_mb_amazon_search() {
 	$aml_categories = aml_amazon::$categories;
 ?>
 <div class="aml_search_box">
@@ -117,9 +118,10 @@ function aml_product_mb_search() {
 <?php }
 
 /**
- * Meta-box for additional meta-data (ASIN, link, image)
+ * meta-box for additional meta-data (asin, link, image)
+ * @todo push html to template functions
  */
-function aml_product_mb_meta() {
+function aml_mb_product_meta() {
 	global $post;
 	$type = get_post_meta($post->ID, 'aml_type', true);
 	$asin = get_post_meta($post->ID, 'aml_asin', true);
@@ -155,9 +157,9 @@ function aml_product_mb_meta() {
 }
 
 /**
- * Callback to process posted metadata
+ * callback to process posted metadata
  *
- * @param int Post ID
+ * @param int post id
  */
 function aml_product_meta_postback ($post_id) {
 	if (!wp_verify_nonce($_POST["aml_product_meta_nonce"], basename(__FILE__)) || 'aml_product' != $_POST['post_type']) {
@@ -176,10 +178,10 @@ function aml_product_meta_postback ($post_id) {
 }
 
 /**
- * Register additional columns for manage products page
+ * register additional columns for manage products page
  *
- * @param array Columns
- * @return array Columns (with additions)
+ * @param array columns
+ * @return array columns (with additions)
  */
 function aml_product_register_columns ($cols) {
 	$cols['type'] = 'Category';
@@ -191,13 +193,13 @@ function aml_product_register_columns ($cols) {
 }
 
 /**
- * Display additional columns for manage products page
+ * display additional columns for manage products page
  *
- * @param string Column name
- * @param int Post ID
+ * @param string column name
+ * @param int post id
  */
 function aml_product_display_columns ($name, $post_id) {
-	global $post;
+	$post = get_post($post_id);
 
 	switch ($name) {
 		case 'type':
@@ -239,7 +241,8 @@ function aml_product_display_columns ($name, $post_id) {
 }
 
 /**
- * Display products in the right now meta box
+ * display counts in the diashboard
+ * @todo push html to template functions
  */
 function aml_product_right_now() {
 	$num_posts = wp_count_posts('aml_product');
@@ -257,11 +260,11 @@ function aml_product_right_now() {
 }
 
 /**
- * Register the actions for our product post_type
+ * initialise and register the actions for product post_type
  */
 function aml_init_product() {
 	aml_type_product();
-	aml_product_people();
+	aml_tax_people();
 	add_action('manage_aml_product_posts_custom_column', 'aml_product_display_columns', 10, 2);
 	add_action('manage_edit-aml_product_columns', 'aml_product_register_columns');
 	add_action('right_now_content_table_end', 'aml_product_right_now');
@@ -271,6 +274,7 @@ function aml_init_product() {
 /**
  * Extra rewrite rules. Kept around for reference until stable release
  * @deprecated
+ * @todo remove
  */
 function aml_extra_rewrite() {
 	global $wp_rewrite;

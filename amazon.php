@@ -1,6 +1,6 @@
 <?php
 /**
- * Wrapper for Amazon ECS library
+ * wrapper for AmazonECS library
  * @package amazon-library
  * @author Christopher Roussel <christopher@impleri.net>
  */
@@ -14,7 +14,7 @@
 class aml_amazon {
 
 	/**
-	 * @param array Amazon domains that can be searched
+	 * @var Amazon domains that can be searched
 	 */
 	public static $domains = array(
 		'US' => 'United States',
@@ -26,7 +26,7 @@ class aml_amazon {
 	);
 
 	/**
-	 * @param array Accepted Amazon categories
+	 * @var accepted Amazon categories
 	 */
 	public static $categories = array(
 		'Books',
@@ -36,7 +36,7 @@ class aml_amazon {
 	);
 
 	/**
-	 * @param array Image sizes
+	 * @var image sizes
 	 */
 	public static $image_sizes = array(
 		'sm' => '._SL75_',
@@ -46,7 +46,7 @@ class aml_amazon {
 	);
 
 	/**
-	 * @param array Image sizes
+	 * @var image size texts
 	 */
 	public static $img_size_text = array(
 		'sm' => 'Small',
@@ -56,22 +56,22 @@ class aml_amazon {
 	);
 
 	/**
-	 * @param string Template for HTML error messages
-	 */
-	public static $error = '<div class="">%s</div>';
-
-	/**
-	 * @param string URL to blank image if Amazon does not have one
+	 * @var url to blank image if Amazon does not have one
 	 */
 	public static $blank_image = '';
 
 	/**
-	 * @param string URL prefix for Amazon images
+	 * @var url prefix for Amazon images
 	 */
-	public static $image_base = 'http://ecx.images-amazon.com/images/I/';
+	private static $image_base = 'http://ecx.images-amazon.com/images/I/';
 
 	/**
-	 * AmazonECS Instance
+	 * @var template for html error messages
+	 */
+	private static $error = '<div class="">%s</div>';
+
+	/**
+	 * AmazonECS instance
 	 *
 	 * Gets and holds a single AmazonECS instance
 	 * @return object AmazonECS object
@@ -96,13 +96,13 @@ class aml_amazon {
 	}
 
 	/**
-	 * Amazon Item Search
+	 * Amazon item search
 	 *
-	 * Searches Amazon for items matching the set descriptions
-	 * @param string Search terms
+	 * searches Amazon for items matching the set descriptions
+	 * @param string search terms
 	 * @param string Amazon category/product type (see aml_amazon::$categories for accepted terms)
-	 * @param int Page of results to return
-	 * @return string Parsed HTML from aml_amazon::parse for echo
+	 * @param int page of results to return
+	 * @return string parsed html from aml_amazon::parse
 	 */
 	public static function search ($search, $type='Books', $page=1) {
 		$amazon = self::get();
@@ -137,11 +137,11 @@ class aml_amazon {
 	}
 
 	/**
-	 * Amazon Item Lookup
+	 * Amazon item lookup
 	 *
-	 * Looks up an item on Amazon by ASIN/ISBN
-	 * @param string ASIN/ISBN number
-	 * @return string Parsed HTML from aml_amazon::parse for echo
+	 * looks up an item on Amazon by asin/isbn
+	 * @param string asin/isbn number
+	 * @return string parsed html from aml_amazon::parse for echo
 	 */
 	public static function lookup ($asin) {
 		$amazon = self::get();
@@ -166,11 +166,12 @@ class aml_amazon {
 	}
 
 	/**
-	 * Item Parser
+	 * Item parser
 	 *
-	 * Parse an result item object into an HTML listing
+	 * parse an result item object into an html listing
 	 * @param object SimpleXML item node from AmazonECS response
-	 * @return string HTML for echo
+	 * @return string formatted html
+	 * @todo port out formatting to template
 	 */
 	public static function parse ($item) {
 		$ret = '';
@@ -212,34 +213,25 @@ class aml_amazon {
 	}
 
 	/**
-	 * Strips commas from name for compatibility with taxonomy entry
-	 * @param string value Name to clean
-	 * @param string key Unused
-	 * @return string Cleaned name
-	 */
-	function clean_name (&$name, $key='') {
-		str_replace(array(',', '  '), array('', ' '), $name);
-	}
-
-	/**
-	 * Amazon Image URL Destructor
+	 * Amazon image url destructor
 	 *
-	 * Reduces a URL to an Amazon image to the name hash for dynamic sizing of images
-	 * @param string URL
-	 * @return string Image name hash
+	 * reduces a url for an Amazon image to the name hash (for dynamic sizing of images)
+	 * @param string url
+	 * @return string image name hash
+	 * @todo implement in aml_amazon::parse
 	 */
-	function strip_image ($url) {
+	public function strip_image ($url) {
 		$arr = array_merge(array_values(self::$image_sizes), array(self::$image_base, '.jpg'));
 		return str_replace($arr, '', $url);
 	}
 
 	/**
-	 * Amazon Image URL Constructor
+	 * Amazon image url constructor
 	 *
-	 * Creates a URL to an Amazon Image from a hash, sized at the currently configured size
-	 * @param string Image name hash
-	 * @param string Image size
-	 * @return string URL to image
+	 * creates a url for an Amazon image from the stored hash, sized at the currently configured size
+	 * @param string image name hash
+	 * @param string image size
+	 * @return string url to image
 	 */
 	public function build_image ($image, $size='med') {
 		if (0 === strpos('http', $image)) {
@@ -247,5 +239,17 @@ class aml_amazon {
 		}
 
 		return self::$image_base . $image . self::$image_sizes[$size] . '.jpg';
+	}
+
+	/**
+	 * Name cleaner
+	 *
+	 * Strips commas from name for compatibility with taxonomy entry
+	 * @param string (value) name to clean
+	 * @param string (key) unused
+	 * @return string cleaned name
+	 */
+	private static function clean_name (&$name, $key='') {
+		str_replace(array(',', '  '), array('', ' '), $name);
 	}
 }

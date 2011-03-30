@@ -1,12 +1,12 @@
 <?php
 /**
- * Adds our admin menus, and some stylesheets and JavaScript to the admin head.
+ * admin menus and some plugin options
  * @package amazon-library
  * @author Christopher Roussel <christopher@impleri.net>
  */
 
 /**
- * Default options
+ * default options
  */
 function aml_default_options() {
 	return array(
@@ -30,27 +30,33 @@ function aml_default_options() {
 }
 
 /**
- * Shortcut for handling meta updates
+ * shortcut for handling meta updates
  *
  * @param string name of meta field
  * @param int post id for meta
  * @param mixed new value (default is null)
+ * @return bool true on success
  */
 function aml_update_meta ($field, $post, $new=null) {
 	$old = get_post_meta($post, $field, true);
 	if(empty($new)) {
-		delete_post_meta($post, $field, $old);
+		$ret = delete_post_meta($post, $field, $old);
 	}
 	elseif (empty($old)) {
-		add_post_meta($post, $field, $new);
+		$ret = add_post_meta($post, $field, $new);
 	}
 	elseif ($new != $old) {
-		update_post_meta($post, $field, $new, $old);
+		$ret = update_post_meta($post, $field, $new, $old);
 	}
+	else {
+		$ret = false;
+	}
+
+	return $ret;
 }
 
 /**
- * Shortcut for getting option from the aml_options array
+ * shortcut for getting option from the aml_options array
  *
  * @param string name of option
  * @param mixed default value override (if null, will give from aml_default_options)
@@ -78,22 +84,28 @@ function aml_get_option ($key='', $def=null) {
 }
 
 /**
- * Hack to use our templates (for post_type pages)
+ * hack to use our templates
  *
  * @param string found template (passed from the filter)
- * @param string post_type to load
- * @param string type of page (archive or single)
+ * @param string type of taxonomy to check
+ * @param string type of page (archive, single, or taxonomy)
  * @return string path to template
  */
-function aml_insert_type_template ($template, $type, $page='archive') {
-	$post_type = get_query_var('post_type');
+function aml_insert_template ($template, $check, $page='archive') {
+	if ($page == 'taxonomy') {
+		$term = get_queried_object();
+		$type = $term->taxonomy;
+	}
+	else {
+		$type = get_query_var('post_type');
+	}
 
 	// not ours to worry about!
-	if ($type != $post_type) {
+	if ($check != $type) {
 		return $template;
 	}
 
-	$file = $page.'-'.$type.'.php';
+	$file = $page.'-'.$check.'.php';
 
 	// template not found in theme folder, so insert our default
 	if ($file != basename($template)) {
@@ -107,34 +119,7 @@ function aml_insert_type_template ($template, $type, $page='archive') {
 }
 
 /**
- * Hack to use our templates
- *
- * @param string found template
- * @return string path to template
- */
-function aml_insert_tax_template ($template, $type, $page='taxonomy') {
-	$term = get_queried_object();
-
-	// not ours to worry about!
-	if ($type != $term->taxonomy) {
-		return $template;
-	}
-
-	$file = $page.'-'.$type.'.php';
-
-	// template not found in theme folder, so insert our default
-	if ($file != basename($template)) {
-		$path = dirname(__FILE__) . '/templates/' . $file;
-		if ( file_exists($path)) {
-			return $path;
-		}
-	}
-
-	return $template;
-}
-
-/**
- * AML options page display
+ * options page display
  */
 function aml_options_page() {
 ?>
@@ -153,7 +138,7 @@ function aml_options_page() {
 }
 
 /**
- * Validates posted options for Now Reading
+ * validates posted options
  *
  * @param array $_POST data passed from WP
  * @return array validated options
@@ -200,7 +185,7 @@ function aml_options_amazon() {
 <?php }
 
 /**
- * Display options header display
+ * display options header display
  */
 function aml_options_display() {
 ?>
@@ -208,7 +193,7 @@ function aml_options_display() {
 <?php }
 
 /**
- * Amazon AWS ID field display
+ * Amazon AWS id field
  */
 function aml_amazon_id_field() {
 ?>
@@ -217,7 +202,7 @@ function aml_amazon_id_field() {
 <?php }
 
 /**
- * Amazon AWS secret field display
+ * Amazon AWS secret field
  */
 function aml_secret_key_field() {
 ?>
@@ -226,7 +211,7 @@ function aml_secret_key_field() {
 <?php }
 
 /**
- * Amazon associate ID field display
+ * Amazon associate id field
  */
 function aml_associate_field() {
 ?>
@@ -236,7 +221,7 @@ function aml_associate_field() {
 <?php }
 
 /**
- * Amazon domain field display
+ * Amazon domain field
  */
 function aml_domain_field() {
 	$option = aml_get_option('aml_domain');
@@ -252,7 +237,7 @@ function aml_domain_field() {
 <?php }
 
 /**
- * Amazon image size field display
+ * Amazon image size field
  */
 function aml_image_size_field() {
 	$option = aml_get_option('aml_image_size');
@@ -267,7 +252,7 @@ function aml_image_size_field() {
 <?php }
 
 /**
- * Products per page field display
+ * products per page field display
  */
 function aml_per_page_field() {
 ?>
@@ -275,10 +260,10 @@ function aml_per_page_field() {
 <?php }
 
 /**
- * Template for slug field display
+ * template for slug field display
  *
- * @param string Option key
- * @param string Option description
+ * @param string key
+ * @param string description
  */
 function aml_slug_field ($option, $text) {
 ?>
@@ -288,35 +273,35 @@ function aml_slug_field ($option, $text) {
 <?php }
 
 /**
- * Base slug field
+ * base slug field
  */
 function aml_slug_base_field() {
 	aml_slug_field('aml_slug_base', 'Base tag for all Amazon Media Libraries pages. Default is library.');
 }
 
 /**
- * Product slug field display
+ * product slug field display
  */
 function aml_slug_product_field() {
 	aml_slug_field('aml_slug_product', 'Tag prepended for product URLs. Default is book.');
 }
 
 /**
- * Person slug field display
+ * person slug field display
  */
 function aml_slug_person_field() {
 	aml_slug_field('aml_slug_person', 'Tag prepended for person URLs (e.g. authors, editors, actors, directors, etc). Default is person.');
 }
 
 /**
- * Tag slug field display
+ * tag slug field display
  */
 function aml_slug_tag_field() {
 	aml_slug_field('aml_slug_tag', 'Tag prepended for tag URLs. Default is tag.');
 }
 
 /**
- * User slug field display
+ * user slug field display
  */
 function aml_slug_user_field() {
 	aml_slug_field('aml_slug_user', 'Tag prepended for user URLs. Default is user.');
@@ -324,14 +309,15 @@ function aml_slug_user_field() {
 }
 
 /**
- * Shelf slug field display
+ * shelf slug field display
  */
 function aml_slug_shelf_field() {
 	aml_slug_field('aml_slug_shelf', 'Tag prepended for shelf URLs. Default is shelf.');
 }
 
 /**
- * Initialises options for Now Reading by inserting missing options and registering with WP Settings API
+ * initialises options by inserting missing options and registering with WP settings api
+ * @todo check once more
  */
 function aml_options_init() {
 	$default_options = aml_default_options();
@@ -363,3 +349,5 @@ function aml_options_init() {
 	add_settings_field('aml_slug_user', __('User base', 'amazon-library'), 'aml_slug_user_field', 'aml_options', 'aml_options_display');
 	add_settings_field('aml_slug_shelf', __('Shelf base', 'amazon-library'), 'aml_slug_shelf_field', 'aml_options', 'aml_options_display');
 }
+
+add_action('admin_menu', 'aml_options_init');

@@ -1,9 +1,10 @@
 <?php
 /**
- * root page
+ * Amazon Media Libraries
  * @package amazon-library
  * @author Christopher Roussel <christopher@impleri.net>
  */
+
 /*
 Plugin Name: Amazon Media Libraries
 Version: 0.9.2 Beta
@@ -37,6 +38,8 @@ function aml_install() {
 
 /**
  * Checks if required options (AWS keys) need to be set
+ *
+ * @return bool true if necessary options are valid
  */
 function aml_check() {
 	$aws_key = aml_get_option('aml_amazon_id');
@@ -51,7 +54,7 @@ function aml_check() {
 }
 
 /**
- * Creates our taxonomies using WP taxonomy & post type APIs
+ * Creates custom post_types and taxonomies
  */
 function aml_init() {
 	// Only load the rest of AML if the necessary options are set
@@ -98,6 +101,5 @@ function aml_init() {
 // all of our hooks come last (i.e. here)
 register_activation_hook(basename(dirname(__FILE__)) . '/' . basename(__FILE__), 'aml_install');
 add_action('init', 'aml_init');
-add_action('admin_menu', 'aml_options_init');
 
 // Pure PHP files should not have a closing PHP tag!!
