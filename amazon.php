@@ -6,9 +6,9 @@
  */
 
 /**
- * AML Amazon Wrapper
+ * AmazonECS wrapper
  *
- * Wrapper class to the AmazonECS library. Acts as a simple middle layer between AML and AmazonECS.
+ * acts as a simple middle layer between AML and AmazonECS.
  * @static
  */
 class aml_amazon {
@@ -73,7 +73,7 @@ class aml_amazon {
 	/**
 	 * AmazonECS instance
 	 *
-	 * Gets and holds a single AmazonECS instance
+	 * gets and holds a single AmazonECS instance
 	 * @return object AmazonECS object
 	 */
 	public static function &get() {
@@ -83,10 +83,11 @@ class aml_amazon {
 			if (!class_exists('AmazonECS')) {
 				require dirname(__FILE__) . '/lib/AmazonECS.class.php';
 			}
-			$options = get_option('aml_options');
-			if (!empty($options['aml_amazon_id']) && !empty($options['aml_secret_key'])) {
-				$country = (empty($options['aml_domain'])) ? 'US' : strtoupper($options['aml_domain']);
-				$amazon = new AmazonECS($options['aml_amazon_id'], $options['aml_secret_key'], $country, $options['aml_associate']);
+			$id = aml_get_option('aml_amazon_id');
+			$key = aml_get_option('aml_secret_key');
+			if (!empty($id) && !empty($key)) {
+				$country = aml_get_option('aml_domain','US');
+				$amazon = new AmazonECS($id, $key, $country, aml_get_option('aml_associate'));
 			}
 			else {
 				$amazon = false;
@@ -166,7 +167,7 @@ class aml_amazon {
 	}
 
 	/**
-	 * Item parser
+	 * item parser
 	 *
 	 * parse an result item object into an html listing
 	 * @param object SimpleXML item node from AmazonECS response
@@ -242,9 +243,9 @@ class aml_amazon {
 	}
 
 	/**
-	 * Name cleaner
+	 * name cleaner
 	 *
-	 * Strips commas from name for compatibility with taxonomy entry
+	 * strips commas from name for compatibility with taxonomy entry
 	 * @param string (value) name to clean
 	 * @param string (key) unused
 	 * @return string cleaned name

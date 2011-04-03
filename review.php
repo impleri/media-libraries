@@ -1,14 +1,14 @@
 <?php
 /**
- * media shelves
+ * product reviews and related taxonomies
  * @package amazon-library
  * @author Christopher Roussel <christopher@impleri.net>
  */
 
 /**
- * Review custom post_type
+ * review post_type
  */
-function aml_type_review() {
+function aml_review_type() {
 	$slug_base = aml_get_option('aml_slug_base');
 	$slug_review = aml_get_option('aml_slug_review');
 
@@ -33,7 +33,7 @@ function aml_type_review() {
 			'description' => __('A single review/use of a product (e.g. reading a book, watching a DVD, listening to music, etc)'),
 			'supports' => array('title', 'author', 'editor', 'revisions'),
 			'rewrite' => array('slug' => "$slug_base/$slug_review", 'pages' => false, 'feeds' => false, 'with_front' => false),
-			'register_meta_box_cb' => 'aml_review_mb',
+			'register_meta_box_cb' => 'aml_review_boxes',
 			'public_queryable' => true,
 			'hierarchical' => true,
 			'query_var' => true,
@@ -46,7 +46,9 @@ function aml_type_review() {
 }
 
 /**
- * Review custom stati
+ * review stati
+ *
+ * @todo restrict these stati to aml_review type
  */
 function aml_review_stati() {
 	register_post_status( 'added', array(
@@ -68,9 +70,9 @@ function aml_review_stati() {
 }
 
 /**
- * Generic taxonomy for reviews (all of this just to rename 'post tags' to simply 'tags'!)
+ * generic taxonomy for reviews (all of this just to rename 'post tags' to simply 'tags'!)
  */
-function aml_review_tags() {
+function aml_tag_tax() {
 	$slug_base = aml_get_option('slug_base');
 	$slug_tag = aml_get_option('slug_tag');
 
@@ -99,16 +101,17 @@ function aml_review_tags() {
 }
 
 /**
- * Register meta-box for review page
+ * callback from registering aml_review to generate meta boxes on an edit page
  */
-function aml_review_mb() {
+function aml_review_boxes() {
 	 add_meta_box('aml_review_meta', __('Product', 'amazon-library'), 'aml_review_meta', 'aml_review', 'side', 'high');
 }
 
 /**
- * Review details meta-box
+ * meta-box for review details/meta
  *
  * @param object WP_post
+ * @todo push html to template file
  */
 function aml_review_meta ($post) {
 	$rating = get_post_meta($post->ID, 'aml_rating', true);
@@ -138,11 +141,11 @@ function aml_review_meta ($post) {
 }
 
 /**
- * Review details meta-box postback
+ * callback to process posted metadata
  *
- * @param int Post ID
+ * @param int post id
  */
-function aml_review_mb_postback ($post_id) {
+function aml_review_meta_postback ($post_id) {
 	global $post;
 
 	// Verify
@@ -168,12 +171,12 @@ function aml_review_mb_postback ($post_id) {
 }
 
 /**
- * Register additional columns for manage reviews page
+ * register additional columns for manage reviews page
  *
- * @param array Columns
- * @return array Columns with our additions
+ * @param array columns
+ * @return array columns (with additions)
  */
-function aml_review_register_columns($cols) {
+function aml_review_register_columns ($cols) {
 	$cols['type'] = 'Category';
 	$cols['image'] = 'Image';
 	$cols['people'] = 'People';
@@ -183,10 +186,10 @@ function aml_review_register_columns($cols) {
 }
 
 /**
- * Display additional columns for manage products page
+ * display additional columns for manage reviews page
  *
- * @param string Column name
- * @param int Post ID
+ * @param string column name
+ * @param int post id
  */
 function aml_review_display_columns ($name, $post_id) {
 	global $post;
@@ -231,23 +234,42 @@ function aml_review_display_columns ($name, $post_id) {
 }
 
 /**
- * Register the actions for our product post_type
+ * display counts in the diashboard
+ * @todo push html to template functions
+ */
+function aml_review_right_now() {
+	$num_posts = wp_count_posts('aml_review');
+	$num = number_format_i18n($num_posts->publish);
+	$text = _n('Review', 'Reviews', intval($num_posts->publish), 'amazon-library');
+	if (current_user_can('edit_reviews')) {
+		$num = '<a href="/wp-admin/edit.php?post_type=aml_review">' . $num . '</a>';
+		$text = '<a href="/wp-admin/edit.php?post_type=aml_review">' . $text . '</a>';
+	}
+
+	echo '<tr>';
+	echo '<td class="first b b-tags">'.$num.'</td>';
+	echo '<td class="t tags">' . $text . '</td>';
+	echo '</tr>';
+}
+
+/**
+ * initialise and register the actions for review post_type
  */
 function aml_init_review() {
-	aml_type_review();
+	aml_review_type();
 	aml_review_stati();
 	if (aml_get_option('use_tags')) {
-		aml_review_tags();
+		aml_tag_tax();
 	}
 	if (aml_get_option('use_categories')) {
 		register_taxonomy_for_object_type('category', 'aml_review');
 	}
 	add_action('manage_aml_review_posts_custom_column', 'aml_review_display_columns', 10, 2);
 	add_action('manage_edit-aml_review_columns', 'aml_review_register_columns');
-	add_action('right_now_content_table_end', 'aml_product_right_now');
-	add_action('save_post', 'aml_review_mb_postback');
-	wp_enqueue_script('aml-review-script', plugins_url('/js/jquery.rating.js', dirname(__FILE__) ));
-	wp_enqueue_style('aml-review-style', plugins_url('/css/jquery.rating.css', dirname(__FILE__) ));
+	add_action('right_now_content_table_end', 'aml_review_right_now');
+	add_action('save_post', 'aml_review_meta_postback');
+	wp_enqueue_script('aml-review-script', plugins_url('/js/jquery.review.js', dirname(__FILE__) ));
+	wp_enqueue_style('aml-review-style', plugins_url('/css/jquery.review.css', dirname(__FILE__) ));
 }
 
 ?>

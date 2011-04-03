@@ -1,12 +1,14 @@
 <?php
 /**
- * Various meta-data boxes and callbacks
+ * roles and capabilities
  * @package amazon-library
  * @author Christopher Roussel <christopher@impleri.net>
  */
 
 /**
- * Add auths to regular WP roles
+ * add auths to regular WP roles
+ *
+ * @todo make own roles and leave WP's alone
  */
 function aml_capabilities() {
 	$admin = get_role('administrator');
@@ -40,11 +42,12 @@ function aml_capabilities() {
 /**
  * Map meta capabilities to primitive capabilities
  *
- * @param array Capabilities to check
- * @param string Capability
- * @param int User ID
- * @param array $args All arguments
- * @return array Capabilities to check (modified)
+ * @param array capabilities to check
+ * @param string capability
+ * @param int user id
+ * @param array $args all arguments
+ * @return array capabilities to check (modified)
+ * @todo make this work
  */
 function aml_meta_cap ($caps, $cap, $user_id, $args) {
 	// only check capabilities we deal with

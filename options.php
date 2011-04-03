@@ -305,7 +305,6 @@ function aml_slug_tag_field() {
  */
 function aml_slug_user_field() {
 	aml_slug_field('aml_slug_user', 'Tag prepended for user URLs. Default is user.');
-	$options = get_option('aml_options');
 }
 
 /**

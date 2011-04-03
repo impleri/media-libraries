@@ -1,6 +1,6 @@
 <?php
 /**
- * Amazon Media Libraries
+ * aml root file
  * @package amazon-library
  * @author Christopher Roussel <christopher@impleri.net>
  */
@@ -23,6 +23,10 @@ require_once dirname(__FILE__) . '/options.php';
 
 /**
  * Checks if install/upgrade needs to run by checking version in db
+ * @todo implement shelves
+ * @todo template functions
+ * @todo roles and capabilities
+ * @todo widgets
  */
 function aml_install() {
 	$options = get_option('aml_options');
@@ -37,7 +41,7 @@ function aml_install() {
 }
 
 /**
- * Checks if required options (AWS keys) need to be set
+ * checks if required options (aws keys) need to be set
  *
  * @return bool true if necessary options are valid
  */
@@ -54,7 +58,7 @@ function aml_check() {
 }
 
 /**
- * Creates custom post_types and taxonomies
+ * initialise media libraries
  */
 function aml_init() {
 	// Only load the rest of AML if the necessary options are set

@@ -1,11 +1,13 @@
 <?php
 /**
- * AJAX functions
+ * ajax functions
  * @package amazon-library
  * @author Christopher Roussel <christopher@impleri.net>
  */
 
-// handle js callbacks
+/**
+ * ajax callback to perform an Amazon search
+ */
 function aml_ajax_amazon_search() {
 	// validate posted data
 	$search = (isset($_POST['search'])) ? $_POST['search'] : '';
@@ -19,7 +21,9 @@ function aml_ajax_amazon_search() {
 	die;
 }
 
-// handle js callbacks
+/**
+ * ajax callback to view a shelf page
+ */
 function aml_shelf_ajax_callback() {
 	// validate posted data
 	$page = (isset($_POST['page'])) ? $_POST['page'] : '';
@@ -33,6 +37,10 @@ function aml_shelf_ajax_callback() {
 	die;
 }
 
+/**
+ * ajax callback to add product to shelf
+ * unused. needed?
+ */
 function aml_shelf_add_product() {
 	check_ajax_referer( 'taxinlineeditnonce', '_inline_edit' );
 
@@ -73,6 +81,9 @@ function aml_shelf_add_product() {
 	exit;
 }
 
+/**
+ * ajax callback for product live search in shelf page
+ */
 function aml_shelf_live_search() {
 	$products = get_post_type_object('aml_product');
 	if ( ! $products )
@@ -91,11 +102,7 @@ function aml_shelf_live_search() {
 	die;
 }
 
-// product post_type ajax : amazon search
 add_action('wp_ajax_aml_amazon_search', 'aml_ajax_amazon_search');
-//add_action('wp_ajax_aml_amazon_lookup', 'aml_ajax_callback')
-
-// shelf post_type ajax : pagination; (local) product autocomplete; assign product
 add_action('wp_ajax_aml_product_search', 'aml_shelf_live_search');
 add_action('wp_ajax_aml_shelf_search', 'aml_ajax_callback');
 add_action('wp_ajax_aml_shelf_page', 'aml_ajax_callback');

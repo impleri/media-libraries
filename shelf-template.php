@@ -1,6 +1,6 @@
 <?php
 /**
- * Template functions for shelves
+ * template functions for shelves
  * @package amazon-library
  */
 
@@ -11,7 +11,7 @@
  * @return string path to template
  */
 function aml_shelf_archive_template ($template) {
-	return aml_insert_type_template ($template, 'aml_shelf', 'archive');
+	return aml_insert_template ($template, 'aml_shelf', 'archive');
 }
 
 /**
@@ -21,7 +21,7 @@ function aml_shelf_archive_template ($template) {
  * @return string path to template
  */
 function aml_shelf_single_template ($template) {
-	return aml_insert_type_template ($template, 'aml_shelf', 'single');
+	return aml_insert_template ($template, 'aml_shelf', 'single');
 }
 
 /**

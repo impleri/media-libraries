@@ -8,10 +8,9 @@
 /**
  * custom product post_type
  */
-function aml_type_product() {
-	$options = get_option('aml_options', aml_default_options());
-	$slug_base = (empty($options['aml_slug_base'])) ? 'library' : $options['aml_slug_base'];
-	$slug_product = (empty($options['aml_slug_product'])) ? 'product' : $options['aml_slug_product'];
+function aml_product_type() {
+	$slug_base = aml_get_option('aml_slug_base');
+	$slug_product = aml_get_option('aml_slug_product');
 
 	$labels = array(
 		'name' => _x('Products', 'post type general name', 'amazon-library'),
@@ -46,10 +45,9 @@ function aml_type_product() {
 /**
  * people taxonomy for products
  */
-function aml_tax_people() {
-	$options = get_option('aml_options', aml_default_options());
-	$slug_base = (empty($options['aml_slug_base'])) ? 'library' : $options['aml_slug_base'];
-	$slug_person = (empty($options['aml_slug_person'])) ? 'person' : $options['aml_slug_person'];
+function aml_people_tax() {
+	$slug_base = aml_get_option('aml_slug_base');
+	$slug_person = aml_get_option('aml_slug_person');
 
 	$labels = array(
 		'name' => _x('People', 'taxonomy general name', 'amazon-library'),
@@ -263,27 +261,12 @@ function aml_product_right_now() {
  * initialise and register the actions for product post_type
  */
 function aml_init_product() {
-	aml_type_product();
-	aml_tax_people();
+	aml_product_type();
+	aml_people_tax();
 	add_action('manage_aml_product_posts_custom_column', 'aml_product_display_columns', 10, 2);
 	add_action('manage_edit-aml_product_columns', 'aml_product_register_columns');
 	add_action('right_now_content_table_end', 'aml_product_right_now');
 	add_action('save_post', 'aml_product_meta_postback');
-}
-
-/**
- * Extra rewrite rules. Kept around for reference until stable release
- * @deprecated
- * @todo remove
- */
-function aml_extra_rewrite() {
-	global $wp_rewrite;
-
-	$options = get_option('aml_options', aml_default_options());
-	$slug_base = (empty($options['aml_slug_base'])) ? 'library' : $options['aml_slug_base'];
-
-	add_rewrite_rule("$wp_rewrite->root/$slug_base/([^/]+)/([^/]+)/", $wp_rewrite->index.'?aml_author=$matches[1]&aml_product=$matches[2]');
-	add_rewrite_rule("$wp_rewrite->root/$slug_base/([^/]+)/", $wp_rewrite->index.'?aml_author=$matches[1]');
 }
 
 ?>
