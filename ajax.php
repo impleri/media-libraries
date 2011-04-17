@@ -102,7 +102,14 @@ function aml_shelf_live_search() {
 	die;
 }
 
+function aml_ajax_get_image() {
+	$product = (isset($_POST['product'])) ? intval($_POST['product']) : 0;
+	echo ($product) ? get_post_meta($product, 'aml_image', true) : null;
+	die;
+}
+
 add_action('wp_ajax_aml_amazon_search', 'aml_ajax_amazon_search');
+add_action('wp_ajax_aml_review_product', 'aml_ajax_get_image');
 add_action('wp_ajax_aml_product_search', 'aml_shelf_live_search');
 add_action('wp_ajax_aml_shelf_search', 'aml_ajax_callback');
 add_action('wp_ajax_aml_shelf_page', 'aml_ajax_callback');

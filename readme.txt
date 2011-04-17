@@ -9,11 +9,11 @@ Allows you to display books, DVDs, CDs, any kind of media found on Amazon that y
 
 == Description ==
 
-**WARNING**: This project is still in development and is currently not ready for production use. Please install at your own risk.
-
-Amazon Media Libraries is a complete rewrite of the Now Reading series of plugins ([Rob Miller's Now Reading plugin](http://robm.me.uk/projects/plugins/wordpress/now-reading/ "Original Now Reading Plugin"), [Ben Gunnink's Now Reading Reloaded plugin](http://wordpress.org/extend/plugins/now-reading-reloaded/ "Now Reading Reloaded Plugin"), and [Zack Ajmal's Now Watching plugin](http://wordpress.org/extend/plugins/now-watching/ "Now Watching Plugin")). Users with WordPress 2.6 and below should either upgrade or use Rob Miiller's original plugin. Users with WordPress 2.6 - 2.9 should use the Now Reading Reloaded plugin.
+**WARNING**: This project is still in development and is currently not ready for production use. Please install at your own risk. The current version intends to be a rudimentary backend framework. Do not expect the frontend to work.
 
 With Amazon Media Libraries, you can manage multiple libraries/shelves of your current media, keeping track of when you've last used them, and how often you have used them.
+
+Amazon Media Libraries is a complete rewrite of the Now Reading series of plugins ([Rob Miller's Now Reading plugin](http://robm.me.uk/projects/plugins/wordpress/now-reading/ "Original Now Reading Plugin"), [Ben Gunnink's Now Reading Reloaded plugin](http://wordpress.org/extend/plugins/now-reading-reloaded/ "Now Reading Reloaded Plugin"), and [Zack Ajmal's Now Watching plugin](http://wordpress.org/extend/plugins/now-watching/ "Now Watching Plugin")). Users with WordPress 2.6 and below should either upgrade or use Rob Miiller's original plugin. Users with WordPress 2.6 - 2.9 should use the Now Reading Reloaded plugin.
 
 **Requirements**: PHP5 with SimpleXML and SOAP libraries. In very few cases will these not be met automatically.
 
@@ -27,18 +27,19 @@ With Amazon Media Libraries, you can manage multiple libraries/shelves of your c
 
 == Frequently Asked Questions ==
 
+= Why are you releasing unfinished code? =
+
+There are two reasons for this. First, I would like to receive feedback on the pieces that do work. Secondly, I want to show that there is progress being made. Once this gets to version 0.9.5, I hope to have discoered all major difficulties so that it is a stable plugin already 'finished'.
+
+= Why does it take a long time to update the Subversion repository? =
+
+This is simply because I do most of my development on [github](http://github.com/impleri/amazon-media-libraries).
+
 = Why does my library page look funny? =
 
 The premade templates (`/templates/`) that are included were made for the default TwentyTen theme that comes with Wordpress.  If your theme has more or less markup, the templates may look strange in your theme. Also included in the `/contrib/` folder are template files for the old WP theme, Kubrick, as well as the popular K2.
 
 My suggestion to those who are having trouble is to open up the template (such as `archive-library.php`) side-by-side with one of your standard theme templates, and make sure that the markup matches.
-
-
-== Screenshots ==
-
-1. Adding/Editing a book
-2. Managing a book
-3. Library view
 
 
 == Changelog ==

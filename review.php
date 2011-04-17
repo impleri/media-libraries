@@ -167,7 +167,8 @@ function aml_review_meta ($post) {
 		'<label class="screen-reader-text" for="parent_id">' . __('Review', 'amazon-library') . '</label>' .
 		$parents;
 	}
-	echo '<div id="aml_product-thumb"></div>';
+	$image = ($parent) ? '<img src="' . get_post_meta($parent, 'aml_image', true) . '" />' : '';
+	echo '<div id="aml_product-thumb">' . $image . '</div>';
 	review_stars();
 }
 
@@ -178,50 +179,32 @@ function aml_review_meta ($post) {
  */
 function aml_review_meta_postback ($post_id) {
 	$req = isset($_REQUEST['post_type']) ? $_REQUEST['post_type'] : '';
-	if ( ('aml_review' != $req) || !current_user_can( 'edit_review', $post_id ) ) {
-		return $post_id;
+	if (('aml_review' == $req) && current_user_can('edit_review', $post_id)) {
+		$rating = (isset($_POST['aml_rating'])) ? floatval($_POST['aml_rating']) : null;
+		aml_update_meta('aml_rating', $post_id, $rating);
+
+
+		$times = array('added', 'started', 'finished');
+		foreach ($times as $time) {
+			$jj = (isset($_POST['jj-'.$time])) ? intval($_POST['jj-'.$time]) : 0;
+			$mm = (isset($_POST['mm-'.$time])) ? intval($_POST['mm-'.$time]) : 0;
+			$aa = (isset($_POST['aa-'.$time])) ? intval($_POST['aa-'.$time]) : 0;
+			$hh = (isset($_POST['hh-'.$time])) ? intval($_POST['hh-'.$time]) : 0;
+			$mn = (isset($_POST['mn-'.$time])) ? intval($_POST['mn-'.$time]) : 0;
+			$ss = (isset($_POST['ss-'.$time])) ? intval($_POST['ss-'.$time]) : 0;
+			$jj = ($jj > 31) ? 31 : $jj;
+			$jj = ($jj <= 0) ? date('j') : $jj;
+			$mm = ($mm <= 0) ? date('n') : $mm;
+			$aa = ($aa <= 0) ? date('Y') : $aa;
+			$hh = ($hh > 23) ? $hh-24 : $hh;
+			$mn = ($mn > 59) ? $mn-60 : $mn;
+			$ss = ($ss > 59) ? $ss-60 : $ss;
+			$set = sprintf("%04d-%02d-%02d %02d:%02d:%02d", $aa, $mm, $jj, $hh, $mn, $ss);
+			$gmt = get_gmt_from_date($set);
+			aml_update_meta('aml_'.$time, $post_id, $set);
+			aml_update_meta('aml_'.$time.'_gmt', $post_id, $gmt);
+		}
 	}
-
-	$stati = get_available_post_statuses('aml_review');
-
-	$added_jj = ($_POST['jj-added'] > 31) ? 31 : intval($_POST['jj-added']);
-	$added_jj = ($added_jj <= 0) ? date('j') : $added_jj;
-	$added_mm = ($_POST['mm-added'] <= 0) ? date('n') : intval($_POST['mm-added']);
-	$added_aa = ($_POST['aa-added'] <= 0) ? date('Y') : intval($_POST['aa-added']);
-	$added_hh = ($_POST['hh-added'] > 23) ? intval($_POST['hh-added'])-24 : intval($_POST['hh-added']);
-	$added_mn = ($_POST['mn-added'] > 59) ? intval($_POST['mn-added'])-60 : intval($_POST['mn-added']);
-	$added_ss = ($_POST['ss-added'] > 59) ? intval($_POST['ss-added'])-60 : intval($_POST['ss-added']);
-	$added = sprintf("%04d-%02d-%02d %02d:%02d:%02d", $added_aa, $added_mm, $added_jj, $added_hh, $added_mn, $added_ss);
-	$added_gmt = get_gmt_from_date($added);
-	aml_update_meta('aml_added', $post_id, $added);
-	aml_update_meta('aml_added_gmt', $post_id, $added_gmt);
-
-	$started_jj = ($_POST['jj-started'] > 31) ? 31 : intval($_POST['jj-started']);
-	$started_jj = ($started_jj <= 0) ? date('j') : $started_jj;
-	$started_mm = ($_POST['mm-started'] <= 0) ? date('n') : intval($_POST['mm-started']);
-	$started_aa = ($_POST['aa-started'] <= 0) ? date('Y') : intval($_POST['aa-started']);
-	$started_hh = ($_POST['hh-started'] > 23) ? intval($_POST['hh-started'])-24 : intval($_POST['hh-started']);
-	$started_mn = ($_POST['mn-started'] > 59) ? intval($_POST['mn-started'])-60 : intval($_POST['mn-started']);
-	$started_ss = ($_POST['ss-started'] > 59) ? intval($_POST['ss-started'])-60 : intval($_POST['ss-started']);
-	$started = sprintf("%04d-%02d-%02d %02d:%02d:%02d", $started_aa, $started_mm, $started_jj, $started_hh, $started_mn, $started_ss);
-	$started_gmt = get_gmt_from_date($started);
-	aml_update_meta('aml_started', $post_id, $started);
-	aml_update_meta('aml_started', $post_id, $started_gmt);
-
-	$finished_jj = ($_POST['jj-finished'] > 31) ? 31 : intval($_POST['jj-finished']);
-	$finished_jj = ($finished_jj <= 0) ? date('j') : $finished_jj;
-	$finished_mm = ($_POST['mm-finished'] <= 0) ? date('n') : intval($_POST['mm-finished']);
-	$finished_aa = ($_POST['aa-finished'] <= 0) ? date('Y') : intval($_POST['aa-finished']);
-	$finished_hh = ($_POST['hh-finished'] > 23) ? intval($_POST['hh-finished'])-24 : intval($_POST['hh-finished']);
-	$finished_mn = ($_POST['mn-finished'] > 59) ? intval($_POST['mn-finished'])-60 : intval($_POST['mn-finished']);
-	$finished_ss = ($_POST['ss-finished'] > 59) ? intval($_POST['ss-finished'])-60 : intval($_POST['ss-finished']);
-	$finished = sprintf("%04d-%02d-%02d %02d:%02d:%02d", $finished_aa, $finished_mm, $finished_jj, $finished_hh, $finished_mn, $finished_ss);
-	$finished_gmt = get_gmt_from_date($finished);
-	aml_update_meta('aml_finished', $post_id, $finished);
-	aml_update_meta('aml_finished_gmt', $post_id, $finished_gmt);
-
-	$rating = (isset($_POST['aml_rating'])) ? $_POST['aml_rating'] : null;
-	aml_update_meta('aml_rating', $post_id, $rating);
 }
 
 /**
@@ -231,11 +214,10 @@ function aml_review_meta_postback ($post_id) {
  * @return array columns (with additions)
  */
 function aml_review_register_columns ($cols) {
-	$cols['type'] = 'Category';
-	$cols['image'] = 'Image';
-	$cols['people'] = 'People';
-	$cols['tags'] = 'Tags';
+	$cols['product'] = 'Product';
+	$cols['status'] = 'Status';
 	$cols['connect'] = 'Connections';
+	unset($cols['date']);
 	return $cols;
 }
 
@@ -246,41 +228,32 @@ function aml_review_register_columns ($cols) {
  * @param int post id
  */
 function aml_review_display_columns ($name, $post_id) {
-	global $post;
-
+	$post = get_post($post_id);
 	switch ($name) {
-		case 'type':
-			$type = get_post_meta($post_id, 'aml_type', true);
-			if (!empty($type)) {
-				_e($type, 'amazon-library');
+		case 'product':
+			$parent = isset($post->post_parent) ? $post->post_parent : 0;
+			if ($parent) {
+				$product = get_post($parent);
+				$image = get_post_meta($parent, 'aml_image', true);
+				$image = (empty($image)) ? '' : '<br /><img src="'.$image.'" class="image_preview" />';
+				echo $product->post_title.'<div class="image">'.$image.'</div>';
 			}
 			break;
-		case 'image':
-			$link = get_post_meta($post_id, 'aml_link', true);
-			$image = get_post_meta($post_id, 'aml_image', true);
-			$asin = get_post_meta($post_id, 'aml_asin', true);
-			$asin = (empty($asin)) ? '' : '<div class="caption">'.$asin.'</div>';
-			if (empty($image)) {
-				$img = $asin;
-				$asin = '';
+		case 'status':
+			$times = array(
+				'added' => 'Added to Shelf',
+				'started' => 'Began Review',
+				'finished' => 'Review Finished',
+			);
+			$stati = aml_get_review_stati();
+			echo (isset($stati[$post->post_status])) ? $stati[$post->post_status]['label'] : '';
+			foreach ($times as $label => $string) {
+				$time = get_post_meta($post_id, 'aml_'.$label, true);
+				$datef = __('M j, Y @ G:i');
+				$stamp = __('<b>%1$s</b>');
+				$date = date_i18n($datef, strtotime($time));
+				echo '<br />' . __($string, 'amazon-library') . ': <span id="timestamp-' . $label . '">' . sprintf($stamp, $date) . '</span>';
 			}
-			else {
-				$img = '<img src="'.$image.'" class="image_preview" />'.$asin;
-			}
-			if (empty($img)) {
-				$img = '';
-			}
-			$img = (!empty($link)) ? '<a href="'.$link.'">'.$img.'</a>' : $img;
-
-			echo '<div class="image">'.$img.'</div>';
-			break;
-		case 'people':
-			$terms = get_the_term_list($post_id, 'aml_person', '', ', ');
-			echo $terms;
-			break;
-		case 'tags':
-			$terms = get_the_term_list($post_id, 'aml_tag', '', ', ');
-			echo $terms;
 			break;
 		case 'connect':
 			break;
