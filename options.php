@@ -23,7 +23,7 @@ function aml_default_options() {
 		'aml_slug_product' => 'product',
 		'aml_slug_person' => 'person',
 		'aml_slug_tag' => 'tag',
-		'aml_slug_user' => 'user',
+		'aml_slug_review' => 'review',
 		'aml_slug_shelf' => 'shelf',
 		'aml_version' => AML_VERSION,
 	);
@@ -348,5 +348,3 @@ function aml_options_init() {
 	add_settings_field('aml_slug_user', __('User base', 'amazon-library'), 'aml_slug_user_field', 'aml_options', 'aml_options_display');
 	add_settings_field('aml_slug_shelf', __('Shelf base', 'amazon-library'), 'aml_slug_shelf_field', 'aml_options', 'aml_options_display');
 }
-
-add_action('admin_menu', 'aml_options_init');

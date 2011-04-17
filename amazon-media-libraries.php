@@ -68,7 +68,6 @@ function aml_init() {
 
 	// auths first!
 	require_once dirname(__FILE__) . '/roles.php';
-	// add_filter('map_meta_cap', 'aml_meta_cap', 10, 4);
 	aml_capabilities();
 
 	// next the product custom post_type
@@ -105,5 +104,6 @@ function aml_init() {
 // all of our hooks come last (i.e. here)
 register_activation_hook(basename(dirname(__FILE__)) . '/' . basename(__FILE__), 'aml_install');
 add_action('init', 'aml_init');
+add_action('admin_menu', 'aml_options_init');
 
 // Pure PHP files should not have a closing PHP tag!!

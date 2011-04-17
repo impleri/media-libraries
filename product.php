@@ -25,18 +25,19 @@ function aml_product_type() {
 	);
 
 	$args = array(
-			'description' => __('Product information and pictures fetched from Amazon. Similar to Amazon, an "official" review can be entered in the product page while individual users can also provide their own reviews in their shelves.'),
-			'rewrite' => array('slug' => "$slug_base/$slug_product", 'pages' => false, 'feeds' => false, 'with_front' => false),
-			'supports' => array('title'),
-			'register_meta_box_cb' => 'aml_product_boxes',
-			'capability_type' => 'product',
-			'has_archive' => $slug_base,
-			'map_meta_cap' => true,
-			'menu_position' => 10,
-			'labels' => $labels,
-			'query_var' => true,
-			'public' => true,
-		);
+		'description' => __('Product information and pictures fetched from Amazon. Similar to Amazon, an "official" review can be entered in the product page while individual users can also provide their own reviews in their shelves.'),
+		'rewrite' => array('slug' => "$slug_base/$slug_product", 'pages' => false, 'feeds' => false, 'with_front' => false),
+		'register_meta_box_cb' => 'aml_product_boxes',
+		'capability_type' => 'product',
+		'supports' => array('title'),
+		'has_archive' => $slug_base,
+		'map_meta_cap' => true,
+		'hierarchical' => true,
+		'menu_position' => 10,
+		'labels' => $labels,
+		'query_var' => true,
+		'public' => true,
+	);
 	register_post_type('aml_product', $args);
 	add_filter('archive_template', 'aml_product_archive_template');
 	add_filter('single_template', 'aml_product_single_template');
@@ -128,7 +129,6 @@ function aml_mb_product_meta() {
 	$image_preview = (empty($image)) ? '' : '<img src="' . $image . '" alt="preview" />';
 	$aml_categories = aml_amazon::$categories;
 ?>
-<input type="hidden" name="aml_product_meta_nonce" id="aml_product_meta_nonce" value="<?php echo wp_create_nonce( basename(__FILE__) ); ?>" />
 <div id="aml_image_preview"><?php echo $image_preview; ?></div>
 <div id="aml_imagewrap">
 	<label id="aml_image-prompt-text" for="aml_image"><?php _e('Link to image', 'amazon-library'); ?></label>
@@ -160,14 +160,15 @@ function aml_mb_product_meta() {
  * @param int post id
  */
 function aml_product_meta_postback ($post_id) {
-	if (!wp_verify_nonce($_POST["aml_product_meta_nonce"], basename(__FILE__)) || 'aml_product' != $_POST['post_type']) {
+	$req = isset($_REQUEST['post_type']) ? $_REQUEST['post_type'] : '';
+	if ( ('aml_product' != $req) || !current_user_can( 'edit_product', $post_id ) ) {
 		return $post_id;
 	}
 
-	$image = $_POST['aml_image'];
-	$asin = $_POST['aml_asin'];
-	$type = $_POST['aml_type'];
-	$link = $_POST['aml_link'];
+	$image = (isset($_REQUEST['aml_image'])) ? $_REQUEST['aml_image'] : null;
+	$asin = (isset($_REQUEST['aml_asin'])) ? $_REQUEST['aml_asin'] : null;
+	$type = (isset($_REQUEST['aml_type'])) ? $_REQUEST['aml_type'] : null;
+	$link = (isset($_REQUEST['aml_link'])) ? $_REQUEST['aml_link'] : null;
 
 	aml_update_meta('aml_asin', $post_id, $asin);
 	aml_update_meta('aml_type', $post_id, $type);

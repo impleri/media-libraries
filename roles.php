@@ -18,6 +18,12 @@ function aml_capabilities() {
 	$admin->add_cap('publish_products');
 	$admin->add_cap('delete_products');
 	$admin->add_cap('delete_published_products');
+	$admin->add_cap('read_reviews');
+	$admin->add_cap('edit_reviews');
+	$admin->add_cap('edit_published_reviews');
+	$admin->add_cap('publish_reviews');
+	$admin->add_cap('delete_reviews');
+	$admin->add_cap('delete_published_reviews');
 
 	$editor = get_role('editor');
 	$editor->add_cap('read_products');
@@ -25,18 +31,30 @@ function aml_capabilities() {
 	$editor->add_cap('publish_products');
 	$editor->add_cap('edit_products');
 	$editor->add_cap('edit_published_products');
+	$editor->add_cap('read_reviews');
+	$editor->add_cap('edit_reviews');
+	$editor->add_cap('edit_published_reviews');
+	$editor->add_cap('publish_reviews');
+	$editor->add_cap('delete_reviews');
 
 	$author = get_role('author');
 	$author->add_cap('read_products');
 	$author->add_cap('publish_products');
 	$author->add_cap('edit_products');
+	$author->add_cap('read_reviews');
+	$author->add_cap('edit_reviews');
+	$author->add_cap('publish_reviews');
 
 	$contrib = get_role('contributor');
 	$contrib->add_cap('read_products');
 	$contrib->add_cap('edit_products');
+	$contrib->add_cap('read_reviews');
+	$contrib->add_cap('edit_reviews');
 
 	$sub = get_role('subscriber');
 	$sub->add_cap('read_products');
+	$sub->add_cap('read_reviews');
+	add_filter('map_meta_cap', 'aml_meta_cap', 10, 4);
 }
 
 /**
@@ -51,38 +69,29 @@ function aml_capabilities() {
  */
 function aml_meta_cap ($caps, $cap, $user_id, $args) {
 	// only check capabilities we deal with
-	$arr = array('edit_product', 'delete_product', 'read_product');
-	if (in_array($cap, $arr)) {
-		$caps = array();
+	$arr = array('edit_product', 'delete_product', 'read_product', 'edit_review', 'delete_review', 'read_review');
+	if (!in_array($cap, $arr)) {
+		return $caps;
 	}
 	$post = get_post($args[0]);
-	$post_type = get_post_type_object($post->post_type);
+	$post_type = ($post) ? get_post_type_object($post->post_type) : $_REQUEST['post_type'];
 
 	switch ($cap) {
 		// products
 		case 'edit_product':
+		case 'edit_review':
+		case 'edit_shelf':
 			$caps[] = ('published' == $post->post_status) ? $post_type->cap->edit_published_posts : $post_type->cap->edit_posts;
 			break;
 		case 'delete_product':
+		case 'delete_review':
+		case 'delete_shelf':
 			$caps[] = $post_type->cap->delete_posts;
 			break;
 		case 'read_product':
-			$caps[] = 'read';
-			break;
-
-		case 'edit_shelf':
-			$caps[] = ($user_id == $post->post_author) ? $post_type->cap->edit_posts : $post_type->cap->edit_others_posts;
-			break;
-		case 'delete_shelf':
-			$caps[] = ($user_id == $post->post_author) ? $post_type->cap->delete_posts : $post_type->cap->delete_others_posts;
-			break;
+		case 'read_review':
 		case 'read_shelf':
-			if ('private' != $post->post_status || $user_id == $post->post_author) {
-				$caps[] = 'read';
-			}
-			else {
-				$caps[] = $post_type->cap->read_private_posts;
-			}
+			$caps[] = 'read';
 			break;
 	}
 	return $caps;

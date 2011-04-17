@@ -196,7 +196,7 @@ class aml_amazon {
 		}
 
 		if (!empty($people)) {
-			array_walk($people, array(self, 'clean_name'));
+			array_walk($people, array('self', 'clean_name'));
 			$ret .= '<div class="aml-item-people">' . __('People', 'amazon-library') . ': <span class="aml-item-people-names">' . implode(', ', $people) . '</span></div>';
 			}
 
