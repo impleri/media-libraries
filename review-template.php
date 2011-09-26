@@ -1,38 +1,38 @@
 <?php
 /**
  * template functions for review pages
- * @package amazon-library
+ * @package media-libraries
  * @author Christopher Roussel <christopher@impleri.net>
  */
 
 /**
- * wrapper to template hack for archive-aml_review
+ * wrapper to template hack for archive-ml_review
  *
  * @param string found template
  * @return string path to template
  */
-function aml_review_archive_template ($template) {
-	return aml_insert_template ($template, 'aml_review', 'archive');
+function ml_review_archive_template ($template) {
+	return ml_insert_template ($template, 'ml_review', 'archive');
 }
 
 /**
- * wrapper to template hack for single-aml_review
+ * wrapper to template hack for single-ml_review
  *
  * @param string found template
  * @return string path to template
  */
-function aml_review_single_template ($template) {
-	return aml_insert_template ($template, 'aml_review', 'single');
+function ml_review_single_template ($template) {
+	return ml_insert_template ($template, 'ml_review', 'single');
 }
 
 /**
- * wrapper to template hack for taxonomy-aml_tag
+ * wrapper to template hack for taxonomy-ml_tag
  *
  * @param string found template
  * @return string path to template
  */
-function aml_tags_taxonomy_template ($template) {
-	return aml_insert_template ($template, 'aml_tag', 'taxonomy');
+function ml_tags_taxonomy_template ($template) {
+	return ml_insert_template ($template, 'ml_tag', 'taxonomy');
 }
 
 // Also not finished and subject to change
@@ -45,7 +45,7 @@ function aml_tags_taxonomy_template ($template) {
  * @param bool $translate Optional, default is false. Whether to translate the result
  * @return string Returns timestamp
  */
-function get_review_custom_time ($d='U', $which='aml_added', $translate=true) {
+function get_review_custom_time ($d='U', $which='ml_added', $translate=true) {
 	$post = get_post();
 	$which_time = get_post_meta($post->ID, $which, true);
 	$time = mysql2date($d, $which_time, $translate);
@@ -59,7 +59,7 @@ function get_review_custom_time ($d='U', $which='aml_added', $translate=true) {
  * @param string $which Optional, default is added to shelf. The meta timestamp to get
  * @return string
  */
-function get_the_review_custom_time ($d='', $which='aml_added') {
+function get_the_review_custom_time ($d='', $which='ml_added') {
 	if ( '' == $d )
 		$the_time = get_review_custom_time(get_option('time_format'), $which);
 	else
@@ -73,7 +73,7 @@ function get_the_review_custom_time ($d='', $which='aml_added') {
  * @param string $d Optional Either 'G', 'U', or php date format defaults to the value specified in the time_format option.
  * @param string $which Optional, default is added to shelf. The meta timestamp to get
  */
-function the_review_custom_time ($d='', $which='aml_added') {
+function the_review_custom_time ($d='', $which='ml_added') {
 	echo apply_filters('the_modified_time', get_the_review_custom_time($d, $which), $d);
 }
 
@@ -84,7 +84,7 @@ function the_review_custom_time ($d='', $which='aml_added') {
  * @param string $which Optional, default is added to shelf. The meta timestamp to get
  * @return string
  */
-function get_the_review_custom_date ($d='', $which='aml_added') {
+function get_the_review_custom_date ($d='', $which='ml_added') {
 	if ( '' == $d )
 		$the_time = get_the_review_custom_time(get_option('date_format'), $which);
 	else
@@ -102,7 +102,7 @@ function get_the_review_custom_date ($d='', $which='aml_added') {
  * @param bool $echo Optional, default is display. Whether to echo the date or return it.
  * @return string|null Null if displaying, string if retrieving.
  */
-function the_review_custom_date ($d='', $which='aml_added', $before='', $after='', $echo=true) {
+function the_review_custom_date ($d='', $which='ml_added', $before='', $after='', $echo=true) {
 	$the_modified_date = $before . get_the_review_custom_date($d, $which) . $after;
 	$the_modified_date = apply_filters('the_modified_date', $the_modified_date, $d, $before, $after);
 
@@ -119,7 +119,7 @@ function the_review_custom_date ($d='', $which='aml_added', $before='', $after='
  *
  * @param object $post
  */
-function aml_pubdel_box($post) {
+function ml_pubdel_box($post) {
 	?>
 <div id="major-publishing-actions">
 <?php do_action('post_submitbox_start'); ?>
@@ -156,8 +156,8 @@ function aml_pubdel_box($post) {
  *
  * @param object $post
  */
-function aml_status_box($post, $can_publish) {
-	$stati = aml_get_review_stati();
+function ml_status_box($post, $can_publish) {
+	$stati = ml_get_review_stati();
 ?>
 <div class="misc-pub-section<?php if ( !$can_publish ) { echo ' misc-pub-section-last'; } ?>">
 	<label for="post_status"><?php _e('Status:') ?></label>
@@ -170,7 +170,7 @@ function aml_status_box($post, $can_publish) {
 			<input type="hidden" name="hidden_post_status" id="hidden_post_status" value="<?php echo esc_attr($post->post_status); ?>" />
 			<select name='post_status' id='post_status' tabindex='4'>
 			<?php foreach ($stati as $name => $args) { ?>
-				<option<?php selected( $post->post_status, $name ); ?> value='<?php echo $name; ?>'><?php _e($args['label'], 'amazon-library') ?></option>
+				<option<?php selected( $post->post_status, $name ); ?> value='<?php echo $name; ?>'><?php _e($args['label'], 'media-libraries') ?></option>
 			<?php } ?>
 			</select>
 			<a href="#post_status" class="save-post-status hide-if-no-js button"><?php _e('OK'); ?></a>
@@ -181,7 +181,7 @@ function aml_status_box($post, $can_publish) {
 <?php
 }
 
-function aml_show_date ($time=0, $which='added', $can_publish=true) {
+function ml_show_date ($time=0, $which='added', $can_publish=true) {
 	global $post, $action;
 
 	if ( !$can_publish ) {
@@ -210,7 +210,7 @@ function aml_show_date ($time=0, $which='added', $can_publish=true) {
 <div id="<?php echo $which; ?>" class="curtime">
 	<?php echo $string; ?>: <span id="timestamp-<?php echo $which; ?>"><?php printf($stamp, $date); ?></span>
 	<a href="#edit_timestamp-<?php echo $which; ?>" class="edit-timestamp hide-if-no-js" tabindex='5'><?php _e('Edit') ?></a>
-	<div id="timestampdiv-<?php echo $which; ?>" class="hide-if-js"><?php aml_touch_time($time, $which); ?></div>
+	<div id="timestampdiv-<?php echo $which; ?>" class="hide-if-js"><?php ml_touch_time($time, $which); ?></div>
 </div>
 <?php
 }
@@ -225,7 +225,7 @@ function aml_show_date ($time=0, $which='added', $can_publish=true) {
  * @param bool $echo false to return a string, true to echo (default is true)
  * @return mixed html string if $echo is false, null otherwise
  */
-function aml_touch_time($time, $which, $echo=true ) {
+function ml_touch_time($time, $which, $echo=true ) {
 	global $wp_locale, $post, $comment;
 
 	$time_adj = current_time('timestamp');
@@ -284,10 +284,10 @@ function review_stars ($check='', $readonly=false, $split=true) {
 	$disabled = disabled($readonly, true, false);
 	$split = ($split) ? ' {split:2}' : '';
 
-	echo '<div id="aml_rating">';
+	echo '<div id="ml_rating">';
 	foreach ($values as $val) {
 		$checked = checked($check, $val, false);
-		echo '<input name="aml_rating" type="radio" value="' . $val . '"' . $checked . $disabled . ' class="star' . $split . '" />';
+		echo '<input name="ml_rating" type="radio" value="' . $val . '"' . $checked . $disabled . ' class="star' . $split . '" />';
 	}
 	echo '</div><br /><br />';
 }

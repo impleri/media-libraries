@@ -1,7 +1,7 @@
 <?php
 /**
- * wrapper for AmazonECS library
- * @package amazon-library
+ * amazon data source for media libraries
+ * @package media-libraries
  * @author Christopher Roussel <christopher@impleri.net>
  */
 
@@ -11,7 +11,7 @@
  * acts as a simple middle layer between AML and AmazonECS.
  * @static
  */
-class aml_amazon {
+class ml_amazon {
 
 	/**
 	 * @var Amazon domains that can be searched
@@ -83,11 +83,11 @@ class aml_amazon {
 			if (!class_exists('AmazonECS')) {
 				require dirname(__FILE__) . '/lib/AmazonECS.class.php';
 			}
-			$id = aml_get_option('aml_amazon_id');
-			$key = aml_get_option('aml_secret_key');
+			$id = ml_get_option('ml_amazon_id');
+			$key = ml_get_option('ml_secret_key');
 			if (!empty($id) && !empty($key)) {
-				$country = aml_get_option('aml_domain','US');
-				$amazon = new AmazonECS($id, $key, $country, aml_get_option('aml_associate'));
+				$country = ml_get_option('ml_domain','US');
+				$amazon = new AmazonECS($id, $key, $country, ml_get_option('ml_associate'));
 			}
 			else {
 				$amazon = false;
@@ -101,14 +101,14 @@ class aml_amazon {
 	 *
 	 * searches Amazon for items matching the set descriptions
 	 * @param string search terms
-	 * @param string Amazon category/product type (see aml_amazon::$categories for accepted terms)
+	 * @param string Amazon category/product type (see ml_amazon::$categories for accepted terms)
 	 * @param int page of results to return
-	 * @return string parsed html from aml_amazon::parse
+	 * @return string parsed html from ml_amazon::parse
 	 */
 	public static function search ($search, $type='Books', $page=1) {
 		$amazon = self::get();
 		if (!$amazon) {
-			return __('Error loading Amazon ECS library', 'amazon-library');
+			return __('Error loading Amazon ECS library', 'media-libraries');
 		}
 
 		$ret = '';
@@ -131,7 +131,7 @@ class aml_amazon {
 				}
 			}
 			else {
-				$ret .= __('Nothing found for the search query', 'amazon-library');
+				$ret .= __('Nothing found for the search query', 'media-libraries');
 			}
 		}
 		return $ret;
@@ -142,12 +142,12 @@ class aml_amazon {
 	 *
 	 * looks up an item on Amazon by asin/isbn
 	 * @param string asin/isbn number
-	 * @return string parsed html from aml_amazon::parse for echo
+	 * @return string parsed html from ml_amazon::parse for echo
 	 */
 	public static function lookup ($asin) {
 		$amazon = self::get();
 		if (!$amazon) {
-			return __('Error loading Amazon ECS library', 'amazon-library');
+			return __('Error loading Amazon ECS library', 'media-libraries');
 		}
 
 		$ret = '';
@@ -197,12 +197,12 @@ class aml_amazon {
 
 		if (!empty($people)) {
 			array_walk($people, array('self', 'clean_name'));
-			$ret .= '<div class="aml-item-people">' . __('People', 'amazon-library') . ': <span class="aml-item-people-names">' . implode(', ', $people) . '</span></div>';
+			$ret .= '<div class="aml-item-people">' . __('People', 'media-libraries') . ': <span class="aml-item-people-names">' . implode(', ', $people) . '</span></div>';
 			}
 
 		$ret .= '<div class="aml-item-asin">ASIN: <span class="aml-item-asin-number">' . $item->ASIN . '</span></div>';
 		$ret .= '<div class="aml-item-link"><a href="' . $item->DetailPageURL . '">Details</a></div>';
-		$ret .= '<div id="' . $item->ASIN . '" class="aml-item">' . __('Use this item', 'amazon-library') . '</div>';
+		$ret .= '<div id="' . $item->ASIN . '" class="aml-item">' . __('Use this item', 'media-libraries') . '</div>';
 		$ret .= '</div>';
 
 		$image = (isset($item->MediumImage)) ? $item->MediumImage->URL : ((isset($item->SmallImage)) ? $item->SmallImage->URL : ((isset($item->LargeImage)) ? $item->LargeImage->URL : self::$blank_image));
@@ -219,7 +219,7 @@ class aml_amazon {
 	 * reduces a url for an Amazon image to the name hash (for dynamic sizing of images)
 	 * @param string url
 	 * @return string image name hash
-	 * @todo implement in aml_amazon::parse
+	 * @todo implement in ml_amazon::parse
 	 */
 	public function strip_image ($url) {
 		$arr = array_merge(array_values(self::$image_sizes), array(self::$image_base, '.jpg'));
@@ -254,3 +254,133 @@ class aml_amazon {
 		str_replace(array(',', '  '), array('', ' '), $name);
 	}
 }
+
+/**
+ * default amazon options
+ */
+function ml_amazon_defaults ($options) {
+	$options['ml_amazon_id'] = '';
+	$options['ml_secret_key'] = '';
+	$options['ml_associate'] = '';
+	$options['ml_domain'] = 'us';
+	$options['ml_image_size'] = 'med';
+
+	return $options;
+}
+
+/**
+ * validates posted options for amazon
+ *
+ * @param array $_POST data passed from WP via ml_options_validate()
+ * @return array validated options
+ */
+function ml_amazon_validate ($ml_post) {
+	$options = get_option('ml_options');
+	$defaults = ml_default_options();
+	$valid = array();
+
+	// Amazon fields
+	$valid['ml_amazon_id'] = ($ml_post['ml_amazon_id']) ? sanitize_text_field($ml_post['ml_amazon_id']) : null;
+	$valid['ml_secret_key'] = ($ml_post['ml_secret_key']) ? sanitize_text_field($ml_post['ml_secret_key']) : null;
+	$valid['ml_associate'] = ($ml_post['ml_associate']) ? sanitize_text_field($ml_post['ml_associate']) : null;
+	$valid['ml_domain'] = ($ml_post['ml_domain']) ? sanitize_text_field($ml_post['ml_domain']) : null;
+	$valid['ml_image_size'] = in_array($ml_post['ml_image_size'], array('sm', 'med', 'lg')) ? $ml_post['ml_image_size'] : null;
+
+	// merge (defaults, current, and new values) into one array
+	$valid = array_merge($defaults, $options, $valid);
+
+	// Throw an error if no AWS info
+	if (empty($valid['ml_amazon_id'])) {
+		add_settings_error('ml_options', 'media-libraries', __('Amazon ID option is required for Media Libraries to function properly!', 'media-libraries'));
+	}
+	if (empty($valid['ml_secret_key'])) {
+		add_settings_error('ml_options', 'media-libraries', __('Amazon secret key is required for Media Libraries to function properly!', 'media-libraries'));
+	}
+	return $valid;
+}
+
+/**
+ * Amazon options header display
+ */
+function ml_options_amazon() {
+?>
+<p><?php _e('The following settings determine what Media Libraries will retrieve from Amazon.', 'media-libraries'); ?></p>
+<?php }
+
+/**
+ * Amazon AWS id field
+ */
+function ml_amazon_id_field() {
+?>
+<input type="text" size="50" id="ml_amazon_id" name="ml_options[ml_amazon_id]" value="<?php echo htmlentities(ml_get_option('ml_amazon_id'), ENT_QUOTES, "UTF-8"); ?>" />
+<p><?php echo sprintf(__('Required to add products from Amazon.  It is free to sign up. Register <a href="%s">here</a>.', 'media-libraries'), 'https://aws-portal.amazon.com/gp/aws/developer/registration/index.html'); ?></p>
+<?php }
+
+/**
+ * Amazon AWS secret field
+ */
+function ml_secret_key_field() {
+?>
+<input type="text" size="50" id="ml_secret_key" name="ml_options[ml_secret_key]" value="<?php echo htmlentities(ml_get_option('ml_secret_key'), ENT_QUOTES, "UTF-8"); ?>" />
+<p><?php echo sprintf(__('Required to add products from Amazon.  Found at the same site as above. Register <a href="%s">here</a>.', 'media-libraries'), 'https://aws-portal.amazon.com/gp/aws/developer/registration/index.html'); ?></p>
+<?php }
+
+/**
+ * Amazon associate id field
+ */
+function ml_associate_field() {
+?>
+<input type="text" size="50" id="ml_associate" name="ml_options[ml_associate]" value="<?php echo htmlentities(ml_get_option('ml_associate'), ENT_QUOTES, "UTF-8"); ?>" />
+<p><?php _e('If you choose to link to a product page on Amazon using the url meta - as the default template does - then you can earn commission if your visitors then purchase products.'); ?></p>
+<p><?php echo sprintf(__('If you do not have an Amazon Associates ID, you can either <a href="%s">get one</a>.', 'media-libraries'), 'http://associates.amazon.com/'); ?></p>
+<?php }
+
+/**
+ * Amazon domain field
+ */
+function ml_domain_field() {
+	$option = ml_get_option('ml_domain');
+	$ml_domains = ml_amazon::$domains;
+?>
+<select id="ml_domain" name="ml_options[ml_domain]">
+<?php foreach ($ml_domains as $domain => $country) { ?>
+<option value="<?php echo $domain; ?>"<?php selected($domain, $option); ?>><?php echo $country; ?></option>
+<?php } ?>
+</select>
+<p><?php _e('Country-specific Amazon site to use for searching and product links', 'media-libraries'); ?></p>
+<p><?php _e('NB: If you have country-specific books in your catalogue and then change your domain setting, some old links might stop working.', 'media-libraries'); ?></p>
+<?php }
+
+/**
+ * Amazon image size field
+ * @todo remove NB when image auto-size working
+ */
+function ml_image_size_field() {
+	$option = ml_get_option('ml_image_size');
+	$sizes = ml_amazon::$img_size_text;
+?>
+<select id="ml_image_size" name="ml_options[ml_image_size]">
+<?php foreach ($sizes as $size => $name) { ?>
+<option value="<?php echo $size; ?>"<?php selected($size, $option); ?>><?php _e($name); ?></option>
+<?php } ?>
+</select>
+<p><?php _e('NB: This change will only be applied to products you add from this point onwards.'); ?></p>
+<?php }
+
+/**
+ * register amazon options with WP settings api
+ */
+function ml_amazon_init_options() {
+	add_settings_section('ml_options_amazon', __('Amazon Settings', 'media-libraries'), 'ml_options_amazon', 'ml_options');
+
+	// Amazon field definitions
+	add_settings_field('ml_amazon_id', __('Amazon Web Services Access Key ID', 'media-libraries'), 'ml_amazon_id_field', 'ml_options', 'ml_options_amazon');
+	add_settings_field('ml_secret_key', __('Amazon Web Services Secret Access Key', 'media-libraries'), 'ml_secret_key_field', 'ml_options', 'ml_options_amazon');
+	add_settings_field('ml_associate', __('Your Amazon Associates ID', 'media-libraries'), 'ml_associate_field', 'ml_options', 'ml_options_amazon');
+	add_settings_field('ml_domain', __('Amazon domain to use', 'media-libraries'), 'ml_domain_field', 'ml_options', 'ml_options_amazon');
+	add_settings_field('ml_image_size', __('Image size to use', 'media-libraries'), 'ml_image_size_field', 'ml_options', 'ml_options_display');
+}
+
+add_filter('ml-default-options', 'ml_amazon_defaults');
+add_action('ml-options-init', 'ml_amazon_init_options');
+add_action('ml-options-validate', 'ml_amazon_validate');

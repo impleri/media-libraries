@@ -1,20 +1,20 @@
 <?php
 /**
  * ajax functions
- * @package amazon-library
+ * @package media-libraries
  * @author Christopher Roussel <christopher@impleri.net>
  */
 
 /**
  * ajax callback to perform an Amazon search
  */
-function aml_ajax_amazon_search() {
+function ml_ajax_amazon_search() {
 	// validate posted data
 	$search = (isset($_POST['search'])) ? $_POST['search'] : '';
 	$type = (isset($_POST['type'])) ? $_POST['type'] : '';
 
 	// run amazon query
-	$ret = aml_amazon::search($search, $type);
+	$ret = ml_amazon::search($search, $type);
 
 	//return results
 	echo $ret;
@@ -24,13 +24,13 @@ function aml_ajax_amazon_search() {
 /**
  * ajax callback to view a shelf page
  */
-function aml_shelf_ajax_callback() {
+function ml_shelf_ajax_callback() {
 	// validate posted data
 	$page = (isset($_POST['page'])) ? $_POST['page'] : '';
 	$search = (isset($_POST['search'])) ? $_POST['search'] : '';
 
 	// run amazon query
-	$ret = (!empty($search)) ? aml_shelf_search_products($search) : aml_shelf_page($page);
+	$ret = (!empty($search)) ? ml_shelf_search_products($search) : ml_shelf_page($page);
 
 	//return results
 	echo $ret;
@@ -41,7 +41,7 @@ function aml_shelf_ajax_callback() {
  * ajax callback to add product to shelf
  * unused. needed?
  */
-function aml_shelf_add_product() {
+function ml_shelf_add_product() {
 	check_ajax_referer( 'taxinlineeditnonce', '_inline_edit' );
 
 	$taxonomy = sanitize_key( $_POST['taxonomy'] );
@@ -84,8 +84,8 @@ function aml_shelf_add_product() {
 /**
  * ajax callback for product live search in shelf page
  */
-function aml_shelf_live_search() {
-	$products = get_post_type_object('aml_product');
+function ml_shelf_live_search() {
+	$products = get_post_type_object('ml_product');
 	if ( ! $products )
 		die( '0' );
 	if ( ! current_user_can('assign_products') )
@@ -96,20 +96,20 @@ function aml_shelf_live_search() {
 	if ( strlen( $s ) < 2 )
 		die; // require 2 chars for matching
 
-	$results = $wpdb->get_col( $wpdb->prepare( "SELECT p.name FROM $wpdb->posts AS p WHERE p.post_type = 'aml_product' AND p.name LIKE (%s)", '%' . like_escape( $s ) . '%' ) );
+	$results = $wpdb->get_col( $wpdb->prepare( "SELECT p.name FROM $wpdb->posts AS p WHERE p.post_type = 'ml_product' AND p.name LIKE (%s)", '%' . like_escape( $s ) . '%' ) );
 
 	echo join( $results, "\n" );
 	die;
 }
 
-function aml_ajax_get_image() {
+function ml_ajax_get_image() {
 	$product = (isset($_POST['product'])) ? intval($_POST['product']) : 0;
-	echo ($product) ? get_post_meta($product, 'aml_image', true) : null;
+	echo ($product) ? get_post_meta($product, 'ml_image', true) : null;
 	die;
 }
 
-add_action('wp_ajax_aml_amazon_search', 'aml_ajax_amazon_search');
-add_action('wp_ajax_aml_review_product', 'aml_ajax_get_image');
-add_action('wp_ajax_aml_product_search', 'aml_shelf_live_search');
-add_action('wp_ajax_aml_shelf_search', 'aml_ajax_callback');
-add_action('wp_ajax_aml_shelf_page', 'aml_ajax_callback');
+add_action('wp_ajax_ml_amazon_search', 'ml_ajax_amazon_search');
+add_action('wp_ajax_ml_review_product', 'ml_ajax_get_image');
+add_action('wp_ajax_ml_product_search', 'ml_shelf_live_search');
+add_action('wp_ajax_ml_shelf_search', 'ml_ajax_callback');
+add_action('wp_ajax_ml_shelf_page', 'ml_ajax_callback');

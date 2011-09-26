@@ -1,33 +1,39 @@
 <?php
 /**
  * product custom_type and related taxonomies
- * @package amazon-library
+ * @package media-libraries
  * @author Christopher Roussel <christopher@impleri.net>
+ */
+
+/**
+ * @todo
+ * BE widgets: addToShelf(byAddingReading)
+ * FE boxes: contextPeople, metaDetails, addToShelf
  */
 
 /**
  * custom product post_type
  */
-function aml_product_type() {
-	$slug_base = aml_get_option('aml_slug_base');
-	$slug_product = aml_get_option('aml_slug_product');
+function ml_product_type() {
+	$slug_base = ml_get_option('ml_slug_base');
+	$slug_product = ml_get_option('ml_slug_product');
 
 	$labels = array(
-		'name' => _x('Products', 'post type general name', 'amazon-library'),
-		'singular_name' =>  _x('Product', 'post type singular name', 'amazon-library'),
-		'add_new_item' => __('Add New Product', 'amazon-library'),
-		'edit_item' => __('Edit Product', 'amazon-library'),
-		'new_item' => __('New Product', 'amazon-library'),
-		'view_item' => __('View Product', 'amazon-library'),
-		'search_items' => __('Search Products', 'amazon-library'),
-		'not_found' => __('No products found', 'amazon-library'),
-		'not_found_in_trash' => __('No products found in Trash', 'amazon-library'),
+		'name' => _x('Products', 'post type general name', 'media-libraries'),
+		'singular_name' =>  _x('Product', 'post type singular name', 'media-libraries'),
+		'add_new_item' => __('Add New Product', 'media-libraries'),
+		'edit_item' => __('Edit Product', 'media-libraries'),
+		'new_item' => __('New Product', 'media-libraries'),
+		'view_item' => __('View Product', 'media-libraries'),
+		'search_items' => __('Search Products', 'media-libraries'),
+		'not_found' => __('No products found', 'media-libraries'),
+		'not_found_in_trash' => __('No products found in Trash', 'media-libraries'),
 	);
 
 	$args = array(
-		'description' => __('Product information and pictures fetched from Amazon. Similar to Amazon, an "official" review can be entered in the product page while individual users can also provide their own reviews in their shelves.'),
+		'description' => __('Product information and picture. Reviews are made by individual users and show in the product page.'),
 		'rewrite' => array('slug' => "$slug_base/$slug_product", 'pages' => false, 'feeds' => false, 'with_front' => false),
-		'register_meta_box_cb' => 'aml_product_boxes',
+		'register_meta_box_cb' => 'ml_product_boxes',
 		'capability_type' => 'product',
 		'supports' => array('title'),
 		'has_archive' => $slug_base,
@@ -38,31 +44,31 @@ function aml_product_type() {
 		'query_var' => true,
 		'public' => true,
 	);
-	register_post_type('aml_product', $args);
-	add_filter('archive_template', 'aml_product_archive_template');
-	add_filter('single_template', 'aml_product_single_template');
+	register_post_type('ml_product', $args);
+	add_filter('archive_template', 'ml_product_archive_template');
+	add_filter('single_template', 'ml_product_single_template');
 }
 
 /**
  * people taxonomy for products
  */
-function aml_people_tax() {
-	$slug_base = aml_get_option('aml_slug_base');
-	$slug_person = aml_get_option('aml_slug_person');
+function ml_people_tax() {
+	$slug_base = ml_get_option('ml_slug_base');
+	$slug_person = ml_get_option('ml_slug_person');
 
 	$labels = array(
-		'name' => _x('People', 'taxonomy general name', 'amazon-library'),
-		'singular_name' => _x('Person', 'taxonomy singular name', 'amazon-library'),
-		'search_items' =>  __('Search People', 'amazon-library'),
-		'popular_items' =>  __('Popular People', 'amazon-library'),
-		'all_items' => __('All People', 'amazon-library'),
-		'edit_item' => __('Edit Person', 'amazon-library'),
-		'update_item' => __('Update Person', 'amazon-library'),
-		'add_new_item' => __('Add New Person', 'amazon-library'),
-		'new_item_name' => __('New Person', 'amazon-library'),
+		'name' => _x('People', 'taxonomy general name', 'media-libraries'),
+		'singular_name' => _x('Person', 'taxonomy singular name', 'media-libraries'),
+		'search_items' =>  __('Search People', 'media-libraries'),
+		'popular_items' =>  __('Popular People', 'media-libraries'),
+		'all_items' => __('All People', 'media-libraries'),
+		'edit_item' => __('Edit Person', 'media-libraries'),
+		'update_item' => __('Update Person', 'media-libraries'),
+		'add_new_item' => __('Add New Person', 'media-libraries'),
+		'new_item_name' => __('New Person', 'media-libraries'),
 		'add_or_remove_items' => __('Add or remove people'),
 		'choose_from_most_used' => __('Choose from the most used people'),
-		'separate_items_with_commas' => __('Separate people\'s names with commas', 'amazon-library'),
+		'separate_items_with_commas' => __('Separate people\'s names with commas', 'media-libraries'),
 	);
 
 	$capabilities = array(
@@ -75,83 +81,113 @@ function aml_people_tax() {
 	$args = array(
 		'rewrite' => array('slug' => "$slug_base/$slug_person", 'pages' => true, 'feeds' => true, 'with_front' => false),
 		'capabilities' => $capabilities,
-		'query_var' => 'aml_person',
+		'query_var' => 'ml_person',
 		'hierarchical' => false,
 		'labels' => $labels,
 	);
-	register_taxonomy('aml_person','aml_product', $args);
-	add_filter('taxonomy_template', 'aml_person_taxonomy_template');
+	register_taxonomy('ml_person','ml_product', $args);
+	add_filter('taxonomy_template', 'ml_person_taxonomy_template');
 }
 
 /**
- * callback from registering aml_product to generate meta boxes on an edit page
+ * callback from registering ml_product to generate meta boxes on an edit page
  */
-function aml_product_boxes() {
-	 add_meta_box('aml_product_search', __('Search Amazon', 'amazon-library'), 'aml_mb_amazon_search', 'aml_product', 'normal', 'high');
-	 add_meta_box('aml_product_meta', __('Additional Information', 'amazon-library'), 'aml_mb_product_meta', 'aml_product', 'side', 'high');
+function ml_product_boxes() {
+	 add_meta_box('ml_product_search', __('Search Online', 'media-libraries'), 'ml_product_mb_search', 'ml_product', 'normal', 'high');
+	 add_meta_box('ml_product_meta', __('Product Metadata', 'media-libraries'), 'ml_mb_product_meta', 'ml_product', 'side', 'high');
+	 add_meta_box('ml_product_shelf', __('In Your Library', 'media-libraries'), 'ml_mb_product_library', 'ml_product', 'side', 'normal');
 	 wp_enqueue_script( 'aml-product-script', plugins_url('/js/amazon.product.js', __FILE__) );
 	 wp_enqueue_style( 'aml-product-style', plugins_url('/css/amazon.product.css', __FILE__) );
 }
 
 /**
- * meta-box for Amazon search
+ * meta-box for online search
  * @todo push html to template functions
+ * @todo abstract away from Amazon
  */
-function aml_mb_amazon_search() {
-	$aml_categories = aml_amazon::$categories;
-?>
-<div class="aml_search_box">
-	<select id="aml_search_type" name="aml_search_type">
-	<?php foreach ($aml_categories as $cat) { ?>
-		<option value="<?php echo $cat; ?>"><?php _e($cat, 'amazon-library'); ?></option>
-	<?php } ?>
-	</select>
-	<div id="aml_search_stringwrap">
-		<label class="hide-if-no-js" style="" id="aml_search_string-prompt-text" for="aml_search_string"><?php _e('Search for...', 'amazon-library'); ?></label>
-		<input type="text" size="50" id="aml_search_string" name="aml_search_string" value="" autocomplete="off" />
-	</div>
-	<div id='aml_search_button' class="button-primary"><?php _e('Search Amazon', 'amazon-library') ?></div>
-	<div id='aml_search_reset' class="button-primary"><?php _e('Reset Search', 'amazon-library') ?></div>
-	<br style="clear:both" />
-</div>
-<?php }
+function ml_product_mb_search() {
+	$ml_categories = ml_amazon::$categories;
+	echo '<div class="ml_search_box">' . "\n";
+	echo '<select id="ml_search_type" name="ml_search_type">' . "\n";
+	foreach ($ml_categories as $cat) {
+		echo '<option value="' . $cat . '">' . __($cat, 'media-libraries') . '</option>' . "\n";
+	}
+	echo '</select>' . "\n";
+	echo '<div id="ml_search_stringwrap">' . "\n";
+	echo '<label class="hide-if-no-js" style="" id="ml_search_string-prompt-text" for="ml_search_string">' . __('Search for...', 'media-libraries') . '</label>' . "\n";
+	echo '<input type="text" size="50" id="ml_search_string" name="ml_search_string" value="" autocomplete="off" />' . "\n";
+	echo '</div>' . "\n";
+	echo '<div id="ml_search_button" class="button-primary">' . __('Search Amazon', 'media-libraries') . '</div>' . "\n";
+	echo '<div id="ml_search_reset" class="button-primary">' . __('Reset Search', 'media-libraries') . '</div>' . "\n";
+	echo '<br style="clear:both" />' . "\n";
+	echo '</div>' . "\n";
+}
 
 /**
  * meta-box for additional meta-data (asin, link, image)
  * @todo push html to template functions
  */
-function aml_mb_product_meta() {
+function ml_product_mb_meta() {
 	global $post;
-	$type = get_post_meta($post->ID, 'aml_type', true);
-	$asin = get_post_meta($post->ID, 'aml_asin', true);
-	$link = get_post_meta($post->ID, 'aml_link', true);
-	$image = get_post_meta($post->ID, 'aml_image', true);
+	$type = get_post_meta($post->ID, 'ml_type', true);
+	$asin = get_post_meta($post->ID, 'ml_asin', true);
+	$link = get_post_meta($post->ID, 'ml_link', true);
+	$image = get_post_meta($post->ID, 'ml_image', true);
 	$image_preview = (empty($image)) ? '' : '<img src="' . $image . '" alt="preview" />';
-	$aml_categories = aml_amazon::$categories;
-?>
-<div id="aml_image_preview"><?php echo $image_preview; ?></div>
-<div id="aml_imagewrap">
-	<label id="aml_image-prompt-text" for="aml_image"><?php _e('Link to image', 'amazon-library'); ?></label>
-	<input type="text" size="50" id="aml_image" name="aml_image" value="<?php echo $image; ?>" autocomplete="off" />
-</div>
+	$ml_categories = ml_amazon::$categories;
 
-<label for="aml_type"><?php _e('Amazon product type', 'amazon-library'); ?></label>
-<select id="aml_type" name="aml_type">
-<?php foreach ($aml_categories as $cat) { ?>
-	<option value="<?php echo $cat; ?>"<?php selected($cat, $type); ?>><?php _e($cat, 'amazon-library'); ?></option>
-<?php } ?>
-</select>
+	echo '<div id="ml_image_preview">' . $image_preview . '</div>' . "\n";
+	echo '<div id="ml_imagewrap">' . "\n";
+	echo '<label id="ml_image-prompt-text" for="ml_image">' . __('Link to image', 'media-libraries') . '</label>' . "\n";
+	echo '<input type="text" size="50" id="ml_image" name="ml_image" value="' . $image . '" autocomplete="off" />' . "\n";
+	echo '</div>' . "\n";
 
-<div id="aml_asinwrap">
-	<label id="aml_asin-prompt-text" for="aml_asin"><?php _e('ASIN Number', 'amazon-library'); ?></label>
-	<input type="text" size="50" id="aml_asin" name="aml_asin" value="<?php echo $asin; ?>" autocomplete="off" />
-</div>
+	echo '<label for="ml_type">' . __('Product type', 'media-libraries') . '</label>' . "\n";
+	echo '<select id="ml_type" name="ml_type">' . "\n";
+	foreach ($ml_categories as $cat) {
+		echo '<option value="' . $cat . '"' . selected($cat, $type, false) . '>' . __($cat, 'media-libraries') . '</option>' . "\n";
+	}
+	echo '</select>' . "\n";
 
-<div id="aml_linkwrap">
-	<label id="aml_link-prompt-text" for="aml_link"><?php _e('Amazon product link', 'amazon-library'); ?></label>
-	<input type="text" size="50" id="aml_link" name="aml_link" value="<?php echo $link; ?>" autocomplete="off" />
-</div>
-<?php
+	echo '<div id="ml_asinwrap">' . "\n";
+	echo '<label id="ml_asin-prompt-text" for="ml_asin">' . __('ASIN Number', 'media-libraries') . '</label>' . "\n";
+	echo '<input type="text" size="50" id="ml_asin" name="ml_asin" value="' . $asin . '" autocomplete="off" />' . "\n";
+	echo '</div>' . "\n";
+
+	echo '<div id="ml_linkwrap">' . "\n";
+	echo '<label id="ml_link-prompt-text" for="ml_link">' . __('Product link', 'media-libraries') . '</label>' . "\n";
+	echo '<input type="text" size="50" id="ml_link" name="ml_link" value="' . $link . '" autocomplete="off" />' . "\n";
+	echo '</div>' . "\n";
+}
+
+/**
+ * meta-box for user review and readings/shelves
+ * @todo push html to template functions
+ */
+function ml_mb_product_library() {
+	global $post;
+	$userReadings = '';
+	$userReview = '';
+
+	if ($userReview) {
+		// link to my review
+	}
+	else {
+		// link to add review
+	}
+
+	if (!empty($userReadings)) {
+		// list readings by shelves
+		// link to list of my readings
+	}
+	else {
+		// link to add reading
+	}
+
+// 	echo '<div id="ml_imagewrap">' . "\n";
+// 	echo '<label id="ml_image-prompt-text" for="ml_image">' . __('Link to image', 'media-libraries') . '</label>' . "\n";
+// 	echo '<input type="text" size="50" id="ml_image" name="ml_image" value="' . $image . '" autocomplete="off" />' . "\n";
+// 	echo '</div>' . "\n";
 }
 
 /**
@@ -159,21 +195,21 @@ function aml_mb_product_meta() {
  *
  * @param int post id
  */
-function aml_product_meta_postback ($post_id) {
+function ml_product_postback ($post_id) {
 	$req = isset($_REQUEST['post_type']) ? $_REQUEST['post_type'] : '';
-	if ( ('aml_product' != $req) || !current_user_can( 'edit_product', $post_id ) ) {
+	if ( ('ml_product' != $req) || !current_user_can( 'edit_product', $post_id ) ) {
 		return $post_id;
 	}
 
-	$image = (isset($_REQUEST['aml_image'])) ? $_REQUEST['aml_image'] : null;
-	$asin = (isset($_REQUEST['aml_asin'])) ? $_REQUEST['aml_asin'] : null;
-	$type = (isset($_REQUEST['aml_type'])) ? $_REQUEST['aml_type'] : null;
-	$link = (isset($_REQUEST['aml_link'])) ? $_REQUEST['aml_link'] : null;
+	$image = (isset($_REQUEST['ml_image'])) ? $_REQUEST['ml_image'] : null;
+	$asin = (isset($_REQUEST['ml_asin'])) ? $_REQUEST['ml_asin'] : null;
+	$type = (isset($_REQUEST['ml_type'])) ? $_REQUEST['ml_type'] : null;
+	$link = (isset($_REQUEST['ml_link'])) ? $_REQUEST['ml_link'] : null;
 
-	aml_update_meta('aml_asin', $post_id, $asin);
-	aml_update_meta('aml_type', $post_id, $type);
-	aml_update_meta('aml_link', $post_id, $link);
-	aml_update_meta('aml_image', $post_id, $image);
+	ml_update_meta('ml_asin', $post_id, $asin);
+	ml_update_meta('ml_type', $post_id, $type);
+	ml_update_meta('ml_link', $post_id, $link);
+	ml_update_meta('ml_image', $post_id, $image);
 }
 
 /**
@@ -182,12 +218,12 @@ function aml_product_meta_postback ($post_id) {
  * @param array columns
  * @return array columns (with additions)
  */
-function aml_product_register_columns ($cols) {
+function ml_product_register_columns ($cols) {
 	$cols['type'] = 'Category';
 	$cols['image'] = 'Image';
 	$cols['people'] = 'People';
 	$cols['tags'] = 'Tags';
-	$cols['connect'] = 'Connections';
+	$cols['shelves'] = 'Shelves';
 	return $cols;
 }
 
@@ -197,20 +233,21 @@ function aml_product_register_columns ($cols) {
  * @param string column name
  * @param int post id
  */
-function aml_product_display_columns ($name, $post_id) {
+function ml_product_display_columns ($name, $post_id) {
 	$post = get_post($post_id);
 
 	switch ($name) {
 		case 'type':
-			$type = get_post_meta($post_id, 'aml_type', true);
+			$type = get_post_meta($post_id, 'ml_type', true);
 			if (!empty($type)) {
-				_e($type, 'amazon-library');
+				_e($type, 'media-libraries');
 			}
 			break;
+
 		case 'image':
-			$link = get_post_meta($post_id, 'aml_link', true);
-			$image = get_post_meta($post_id, 'aml_image', true);
-			$asin = get_post_meta($post_id, 'aml_asin', true);
+			$link = get_post_meta($post_id, 'ml_link', true);
+			$image = get_post_meta($post_id, 'ml_image', true);
+			$asin = get_post_meta($post_id, 'ml_asin', true);
 			$asin = (empty($asin)) ? '' : '<div class="caption">'.$asin.'</div>';
 			if (empty($image)) {
 				$img = $asin;
@@ -226,15 +263,18 @@ function aml_product_display_columns ($name, $post_id) {
 
 			echo '<div class="image">'.$img.'</div>';
 			break;
+
 		case 'people':
-			$terms = get_the_term_list($post_id, 'aml_person', '', ', ');
+			$terms = get_the_term_list($post_id, 'ml_person', '', ', ');
 			echo $terms;
 			break;
+
 		case 'tags':
-			$terms = get_the_term_list($post_id, 'aml_tag', '', ', ');
+			$terms = get_the_term_list($post_id, 'ml_tag', '', ', ');
 			echo $terms;
 			break;
-		case 'connect':
+
+		case 'shelves':
 			break;
 	}
 }
@@ -243,13 +283,13 @@ function aml_product_display_columns ($name, $post_id) {
  * display counts in the diashboard
  * @todo push html to template functions
  */
-function aml_product_right_now() {
-	$num_posts = wp_count_posts('aml_product');
+function ml_product_right_now() {
+	$num_posts = wp_count_posts('ml_product');
 	$num = number_format_i18n($num_posts->publish);
-	$text = _n('Product', 'Products', intval($num_posts->publish), 'amazon-library');
+	$text = _n('Product', 'Products', intval($num_posts->publish), 'media-libraries');
 	if (current_user_can('edit_products')) {
-		$num = '<a href="/wp-admin/edit.php?post_type=aml_product">' . $num . '</a>';
-		$text = '<a href="/wp-admin/edit.php?post_type=aml_product">' . $text . '</a>';
+		$num = '<a href="/wp-admin/edit.php?post_type=ml_product">' . $num . '</a>';
+		$text = '<a href="/wp-admin/edit.php?post_type=ml_product">' . $text . '</a>';
 	}
 
 	echo '<tr>';
@@ -261,13 +301,16 @@ function aml_product_right_now() {
 /**
  * initialise and register the actions for product post_type
  */
-function aml_init_product() {
-	aml_product_type();
-	aml_people_tax();
-	add_action('manage_aml_product_posts_custom_column', 'aml_product_display_columns', 10, 2);
-	add_action('manage_edit-aml_product_columns', 'aml_product_register_columns');
-	add_action('right_now_content_table_end', 'aml_product_right_now');
-	add_action('save_post', 'aml_product_meta_postback');
+function ml_init_product() {
+	require_once dirname(__FILE__) . '/product-template.php';
+
+	ml_product_type();
+	ml_people_tax();
+
+	add_action('manage_ml_product_posts_custom_column', 'ml_product_display_columns', 10, 2);
+	add_action('manage_edit-ml_product_columns', 'ml_product_register_columns');
+	add_action('right_now_content_table_end', 'ml_product_right_now');
+	add_action('save_post', 'ml_product_postback');
 }
 
-?>
+ml_init_product();

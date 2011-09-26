@@ -1,22 +1,30 @@
 <?php
 /**
- * aml root file
- * @package amazon-library
+ * ml root file
+ * @package media-libraries
  * @author Christopher Roussel <christopher@impleri.net>
  */
 
 /*
-Plugin Name: Amazon Media Libraries
-Version: 0.9.2 Beta
-Plugin URI: http://impleri.net/development/amazon_media_libraries/
-Description: Allows you to display the media you're reading/watching with cover art fetched automatically from Amazon.
+Plugin Name: Media Libraries
+Version: 0.9.3 Beta
+Plugin URI: http://impleri.net/development/media_libraries/
+Description: Allows you to display the media you're reading/watching with cover art fetched automatically from online sources (currently just Amazon).
 Author: Christopher Roussel
 Author URI: http://impleri.net
 */
 
+/**
+ * @todo
+ * product: one-to-many review (one per user), one-to-many reading
+ * reading: many-to-one product, many-to-one review, many-to-many shelf
+ * review: many-to-one product (one per user), one-to-many reading
+ * shelf: many-to-many reading
+ */
+
 // Keep this file short and sweet; leave the clutter for elsewhere!
-define('AML_VERSION', '0.9.2');
-load_plugin_textdomain( 'amazon-library', false, basename(dirname(__FILE__)) . '/lang' );
+define('ML_VERSION', '0.9.3');
+load_plugin_textdomain( 'media-libraries', false, basename(dirname(__FILE__)) . '/lang' );
 
 // Options and auths need to be loaded first/always
 require_once dirname(__FILE__) . '/options.php';
@@ -28,12 +36,12 @@ require_once dirname(__FILE__) . '/options.php';
  * @todo roles and capabilities
  * @todo widgets
  */
-function aml_install() {
-	$options = get_option('aml_options');
+function ml_install() {
+	$options = get_option('ml_options');
 
 	// Install
 	if (false === $options) {
- 		add_option('aml_options', aml_default_options());
+ 		add_option('ml_options', ml_default_options());
  		return; // no need to check for upgrade
 	}
 
@@ -45,9 +53,9 @@ function aml_install() {
  *
  * @return bool true if necessary options are valid
  */
-function aml_check() {
-	$aws_key = aml_get_option('aml_amazon_id');
-	$aws_secret = aml_get_option('aml_secret_key');
+function ml_check() {
+	$aws_key = ml_get_option('ml_amazon_id');
+	$aws_secret = ml_get_option('ml_secret_key');
 
 	if (empty($aws_key) || empty($aws_secret)) {
 		return false;
@@ -60,36 +68,19 @@ function aml_check() {
 /**
  * initialise media libraries
  */
-function aml_init() {
-	// Only load the rest of AML if the necessary options are set
-	if (!aml_check()) {
+function ml_init() {
+	// Only load the rest of ML if the necessary options are set
+	if (!ml_check()) {
 		return;
 	}
 
-	// auths first!
-	require_once dirname(__FILE__) . '/roles.php';
-	aml_capabilities();
-
-	// next the product custom post_type
+	require_once dirname(__FILE__) . '/roles.php'; // auths first!
 	require_once dirname(__FILE__) . '/product.php'; // adds products and people
-	require_once dirname(__FILE__) . '/product-template.php';
-	aml_init_product();
-
-	// then the review custom post_type
-	require_once dirname(__FILE__) . '/review.php'; // adds reviews/uses, tags, and categories
-	require_once dirname(__FILE__) . '/review-template.php';
-	aml_init_review();
-
-	// followed by the shelf taxonomy, if enabled
-/*	if (aml_get_option('aml_use_shelves', 1)) {
-		require_once dirname(__FILE__) . '/shelf.php'; // adds shelves
-		require_once dirname(__FILE__) . '/shelf-template.php';
-		require_once dirname(__FILE__) . '/user.php'; // users (front-end only)
-		aml_init_shelf();
-	} */
-
-	// the widgets
-// 	include_once dirname(__FILE__) . '/widgets.php';
+	require_once dirname(__FILE__) . '/review.php'; // adds reviews
+	require_once dirname(__FILE__) . '/reading.php'; // adds readings
+	require_once dirname(__FILE__) . '/shelf.php'; // adds shelves
+	require_once dirname(__FILE__) . '/user.php'; // users (front-end only)
+// 	include_once dirname(__FILE__) . '/widgets.php'; // the widgets
 
 	// finally amazon connector and ajax if in the admin side (not needed on frontend side)
 	if (is_admin()) {
@@ -98,12 +89,12 @@ function aml_init() {
 	}
 
 	// also add base css for styling
-// 	wp_enqueue_style('aml-style', plugins_url('/css/amazon.css', dirname(__FILE__) ));
+// 	wp_enqueue_style('ml-style', plugins_url('/css/amazon.css', dirname(__FILE__) ));
 }
 
 // all of our hooks come last (i.e. here)
-register_activation_hook(basename(dirname(__FILE__)) . '/' . basename(__FILE__), 'aml_install');
-add_action('init', 'aml_init');
-add_action('admin_menu', 'aml_options_init');
+register_activation_hook(basename(dirname(__FILE__)) . '/' . basename(__FILE__), 'ml_install');
+add_action('init', 'ml_init');
+add_action('admin_menu', 'ml_options_init');
 
 // Pure PHP files should not have a closing PHP tag!!

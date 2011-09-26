@@ -37,10 +37,13 @@ This is simply because I do most of my development on [github](http://github.com
 
 = Why does my library page look funny? =
 
-The premade templates (`/templates/`) that are included were made for the default TwentyTen theme that comes with Wordpress.  If your theme has more or less markup, the templates may look strange in your theme. Also included in the `/contrib/` folder are template files for the old WP theme, Kubrick, as well as the popular K2.
+The premade templates (`/templates/`) that are included were made for the default TwentyEleven theme that comes with Wordpress.  If your theme has more or less markup, the templates may look strange in your theme.
 
 My suggestion to those who are having trouble is to open up the template (such as `archive-library.php`) side-by-side with one of your standard theme templates, and make sure that the markup matches.
 
+= What is the difference between a review and a reading? =
+
+The main difference is that a review only occurs one per product per user. In other words, a single user cannot write multiple reviews. A user can have multiple readings on multiple shelves, but each of these will link to only one review. The only exception is in WPMS installations: users can have mutliple reviews of the same product if they are on different blogs/sites. Additionally, readings do not have pages in the frontend. They are listed on review, product, and shelf pages.
 
 == Changelog ==
 
@@ -72,6 +75,7 @@ My suggestion to those who are having trouble is to open up the template (such a
 = 0.9.3 =
 * Second beta release
 * Added feature to use multiple shelves
+* Separated readings and reviews.
 
 = 0.9.4 =
 * Third beta release

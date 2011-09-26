@@ -1,7 +1,7 @@
 <?php
 /**
  * roles and capabilities
- * @package amazon-library
+ * @package media-libraries
  * @author Christopher Roussel <christopher@impleri.net>
  */
 
@@ -10,7 +10,7 @@
  *
  * @todo make own roles and leave WP's alone
  */
-function aml_capabilities() {
+function ml_init_roles() {
 	$admin = get_role('administrator');
 	$admin->add_cap('read_products');
 	$admin->add_cap('edit_products');
@@ -54,7 +54,7 @@ function aml_capabilities() {
 	$sub = get_role('subscriber');
 	$sub->add_cap('read_products');
 	$sub->add_cap('read_reviews');
-	add_filter('map_meta_cap', 'aml_meta_cap', 10, 4);
+	add_filter('map_meta_cap', 'ml_meta_cap', 10, 4);
 }
 
 /**
@@ -67,7 +67,7 @@ function aml_capabilities() {
  * @return array capabilities to check (modified)
  * @todo make this work
  */
-function aml_meta_cap ($caps, $cap, $user_id, $args) {
+function ml_meta_cap ($caps, $cap, $user_id, $args) {
 	// only check capabilities we deal with
 	$arr = array('edit_product', 'delete_product', 'read_product', 'edit_review', 'delete_review', 'read_review');
 	if (!in_array($cap, $arr)) {
@@ -96,3 +96,5 @@ function aml_meta_cap ($caps, $cap, $user_id, $args) {
 	}
 	return $caps;
 }
+
+ml_init_roles();

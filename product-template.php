@@ -1,38 +1,38 @@
 <?php
 /**
  * template functions for products
- * @package amazon-library
+ * @package media-libraries
  * @author Christopher Roussel <christopher@impleri.net>
  */
 
 /**
- * wrapper to template hack for archive-aml_product
+ * wrapper to template hack for archive-ml_product
  *
  * @param string found template
  * @return string path to template
  */
-function aml_product_archive_template ($template) {
-	return aml_insert_template ($template, 'aml_product', 'archive');
+function ml_product_archive_template ($template) {
+	return ml_insert_template ($template, 'ml_product', 'archive');
 }
 
 /**
- * wrapper to template hack for single-aml_product
+ * wrapper to template hack for single-ml_product
  *
  * @param string found template
  * @return string path to template
  */
-function aml_product_single_template ($template) {
-	return aml_insert_template ($template, 'aml_product', 'single');
+function ml_product_single_template ($template) {
+	return ml_insert_template ($template, 'ml_product', 'single');
 }
 
 /**
- * wrapper to template hack for taxonomy-aml_person
+ * wrapper to template hack for taxonomy-ml_person
  *
  * @param string found template
  * @return string path to template
  */
-function aml_person_taxonomy_template ($template) {
-	return aml_insert_template ($template, 'aml_person', 'taxonomy');
+function ml_person_taxonomy_template ($template) {
+	return ml_insert_template ($template, 'ml_person', 'taxonomy');
 }
 
 // Still not working and subject to change
@@ -313,19 +313,19 @@ function product_shelf_listing() {
 
 
 function product_shelf_image ($prod, $before='', $after='') {
-	$image = get_post_meta($prod->ID, 'aml_image', true);
-	$link = get_post_meta($prod->ID, 'aml_link', true);
-	$asin = get_post_meta($prod->ID, 'aml_asin', true);
+	$image = get_post_meta($prod->ID, 'ml_image', true);
+	$link = get_post_meta($prod->ID, 'ml_link', true);
+	$asin = get_post_meta($prod->ID, 'ml_asin', true);
 	$edit_link = '';
-	$people = get_the_term_list($prod->ID, 'aml_person', '<span class="aml_product-people">', ', ', '</span></br>');
+	$people = get_the_term_list($prod->ID, 'ml_person', '<span class="ml_product-people">', ', ', '</span></br>');
 
 	$html = $before;
 	$html .= '<a href="'.$edit_link.'">';
 	$html .= '<img src="'.$image.'" /><br />';
-	$html .= '<span class="aml_product-title">' . $prod->title . '</span></a><br />';
+	$html .= '<span class="ml_product-title">' . $prod->title . '</span></a><br />';
 	$html .= $people;
 	if (!empty($asin)) {
-		$html .= '<span class="aml_product-link">';
+		$html .= '<span class="ml_product-link">';
 		if (!empty($link)) {
 		$asin = '<a href="'.$link.'">'.$asin.'</a>';
 		}
