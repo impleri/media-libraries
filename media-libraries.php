@@ -9,7 +9,7 @@
 Plugin Name: Media Libraries
 Version: 0.9.3 Beta
 Plugin URI: http://impleri.net/development/media_libraries/
-Description: Allows you to display the media you're reading/watching with cover art fetched automatically from online sources (currently just Amazon).
+Description: Allows you to display the media you're reading/watching with cover art fetched automatically from online sources (Amazon is included).
 Author: Christopher Roussel
 Author URI: http://impleri.net
 */
@@ -20,6 +20,9 @@ Author URI: http://impleri.net
  * reading: many-to-one product, many-to-one review, many-to-many shelf
  * review: many-to-one product (one per user), one-to-many reading
  * shelf: many-to-many reading
+ *
+ * productmeta: person(*)
+ * readingmeta: shelf(1)
  */
 
 // Keep this file short and sweet; leave the clutter for elsewhere!
@@ -54,15 +57,9 @@ function ml_install() {
  * @return bool true if necessary options are valid
  */
 function ml_check() {
-	$aws_key = ml_get_option('ml_amazon_id');
-	$aws_secret = ml_get_option('ml_secret_key');
-
-	if (empty($aws_key) || empty($aws_secret)) {
-		return false;
-	}
-	else {
-		return true;
-	}
+	$pass = true;
+	$pass = apply_filters('ml-init-check', $pass);
+	return $pass;
 }
 
 /**
@@ -77,14 +74,13 @@ function ml_init() {
 	require_once dirname(__FILE__) . '/roles.php'; // auths first!
 	require_once dirname(__FILE__) . '/product.php'; // adds products and people
 	require_once dirname(__FILE__) . '/review.php'; // adds reviews
-	require_once dirname(__FILE__) . '/reading.php'; // adds readings
+	require_once dirname(__FILE__) . '/usage.php'; // adds readings
 	require_once dirname(__FILE__) . '/shelf.php'; // adds shelves
-	require_once dirname(__FILE__) . '/user.php'; // users (front-end only)
+// 	require_once dirname(__FILE__) . '/user.php'; // users (front-end only)
 // 	include_once dirname(__FILE__) . '/widgets.php'; // the widgets
 
 	// finally amazon connector and ajax if in the admin side (not needed on frontend side)
 	if (is_admin()) {
-		require_once dirname(__FILE__) . '/amazon.php';
 		require_once dirname(__FILE__) . '/ajax.php';
 	}
 
@@ -95,6 +91,6 @@ function ml_init() {
 // all of our hooks come last (i.e. here)
 register_activation_hook(basename(dirname(__FILE__)) . '/' . basename(__FILE__), 'ml_install');
 add_action('init', 'ml_init');
-add_action('admin_menu', 'ml_options_init');
+add_action('admin_menu', 'ml_options_init', 9);
 
 // Pure PHP files should not have a closing PHP tag!!

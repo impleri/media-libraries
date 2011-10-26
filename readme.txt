@@ -1,28 +1,29 @@
-=== Amazon Media Libraries ===
+=== Media Libraries ===
 Contributors: impleri
-Tags: books, videos, music, media, widget, amazon, library
+Tags: books, videos, music, games, film, movies, reviews, media, widget, amazon, library
 Requires at least: 3.0
-Tested up to: 3.1
+Tested up to: 3.2
 
-Allows you to display books, DVDs, CDs, any kind of media found on Amazon that you're reading/watching/whatever.
+Allows you to organise books, videos/DVDs, music/CDs, and video games found on external websites (e.g. Amazon) into library shelves and create user reviews of these products.
 
 
 == Description ==
 
-**WARNING**: This project is still in development and is currently not ready for production use. Please install at your own risk. The current version intends to be a rudimentary backend framework. Do not expect the frontend to work.
+**WARNING**: This project is still in development and is currently not ready for production use. Please install at your own risk. The current version intends to be a rudimentary framework. Do not expect everything to work.
 
-With Amazon Media Libraries, you can manage multiple libraries/shelves of your current media, keeping track of when you've last used them, and how often you have used them.
+With Media Libraries, you can manage multiple library shelves of your current media, keeping track of when you've last used them, and how often you have used them. If you wish to use the same item on different shelves (e.g. a book you once read for school/work but also once read separately for fun), this is also possible. Users can also provide their own reviews, and library admins can flag reviews as official site reviews to differentiate them from other reviews.
 
-Amazon Media Libraries is a complete rewrite of the Now Reading series of plugins ([Rob Miller's Now Reading plugin](http://robm.me.uk/projects/plugins/wordpress/now-reading/ "Original Now Reading Plugin"), [Ben Gunnink's Now Reading Reloaded plugin](http://wordpress.org/extend/plugins/now-reading-reloaded/ "Now Reading Reloaded Plugin"), and [Zack Ajmal's Now Watching plugin](http://wordpress.org/extend/plugins/now-watching/ "Now Watching Plugin")). Users with WordPress 2.6 and below should either upgrade or use Rob Miiller's original plugin. Users with WordPress 2.6 - 2.9 should use the Now Reading Reloaded plugin.
+Media Libraries is a complete rewrite of the Now Reading series of plugins ([Rob Miller's Now Reading plugin](http://robm.me.uk/projects/plugins/wordpress/now-reading/ "Original Now Reading Plugin"), [Ben Gunnink's Now Reading Reloaded plugin](http://wordpress.org/extend/plugins/now-reading-reloaded/ "Now Reading Reloaded Plugin"), and [Zack Ajmal's Now Watching plugin](http://wordpress.org/extend/plugins/now-watching/ "Now Watching Plugin")). Users with WordPress 2.6 and below should either upgrade or use Rob Miiller's original plugin. Users with WordPress 2.6 - 2.9 should use the Now Reading Reloaded plugin.
 
 **Requirements**: PHP5 with SimpleXML and SOAP libraries. In very few cases will these not be met automatically.
 
 
 == Installation ==
 
-1. Upload `amazon-media-libraries` to the `/wp-content/plugins/` directory
+1. Upload media-libraries` to the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Make any changes the to provided template files and store them in your theme directory
+3. Activate at least one source provider plugin (Amazon is included) through the 'Plugins' menu in WordPress
+4. Make any changes the to provided template files and store them in your theme directory
 
 
 == Frequently Asked Questions ==
@@ -33,19 +34,27 @@ There are two reasons for this. First, I would like to receive feedback on the p
 
 = Why does it take a long time to update the Subversion repository? =
 
-This is simply because I do most of my development on [github](http://github.com/impleri/amazon-media-libraries).
+This is simply because I do most of my development on [github](http://github.com/impleri/media-libraries).
 
 = Why does my library page look funny? =
 
 The premade templates (`/templates/`) that are included were made for the default TwentyEleven theme that comes with Wordpress.  If your theme has more or less markup, the templates may look strange in your theme.
 
-My suggestion to those who are having trouble is to open up the template (such as `archive-library.php`) side-by-side with one of your standard theme templates, and make sure that the markup matches.
+My suggestion to those who are having trouble is to open up the template (such as `archive-ml_product.php`) side-by-side with one of your standard theme templates, and make sure that the markup matches.
 
 = What is the difference between a review and a reading? =
 
-The main difference is that a review only occurs one per product per user. In other words, a single user cannot write multiple reviews. A user can have multiple readings on multiple shelves, but each of these will link to only one review. The only exception is in WPMS installations: users can have mutliple reviews of the same product if they are on different blogs/sites. Additionally, readings do not have pages in the frontend. They are listed on review, product, and shelf pages.
+The main difference is that a review only occurs one per product per user. A single user cannot write multiple reviews for the same product. However, a user can have multiple readings on multiple shelves (or the same shelf), but each of these will link to only one review. Additionally, readings do not have pages in the frontend. They are listed on review and shelf pages.
 
 == Changelog ==
+
+= 0.9.3 =
+* Second beta release
+* Renamed to Media Libraries (was Amazon Media Libraries)
+* Allow multiple source providers (the Amazon provider is included in the package)
+* Added feature to use multiple shelves
+* Separated readings and reviews
+* Initial template files and functions
 
 = 0.9.2 =
 * First beta release
@@ -72,25 +81,17 @@ The main difference is that a review only occurs one per product per user. In ot
 
 == Roadmap ==
 
-= 0.9.3 =
-* Second beta release
-* Added feature to use multiple shelves
-* Separated readings and reviews.
-
-= 0.9.4 =
-* Third beta release
-* (Re-)added template files for k2 and TwentyTen templates
-
 = 0.9.5 =
 * First release candidate
 * Widgets
-* UI cleanup
-
-= 0.9.6 =
-* Second release candidate
 * Import from Now Reading, Now Reading Reloaded, and Now Watching plugins
+
+= 0.9.7 =
+* Second release candidate
+* UI cleanup
+* Better role/auth management
 
 
 == Template Files ==
 
-The `templates` folder of the Amazon Media Libraries plugin contains a default set of templates for displaying your product data in various places (sidebar, library, etc.).  These are automatically copied to your template directories if WP can write to those directories.
+The `templates` folder of the Amazon Media Libraries plugin contains a default set of templates (based on TwentyEleven) for displaying your product data in various places (sidebar, library, etc.).  These are hacked into the template process, meant to be overridden by copying them into a template folder and modifying them.

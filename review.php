@@ -7,8 +7,10 @@
 
 /**
  * @todo
- * BE widgets: addProduct
- * FE boxes: product/details, readings/shelves/users, addAnotherReading
+ * BE list boxes: official status, rating
+ * BE quick edit box: product drop down, star rating, official/sticky
+ * FE template: book details (with link to main book page and link to product source), tags, usage summary
+ * Comments? Link to other reviews?
  */
 
 /**
@@ -88,10 +90,9 @@ function ml_tag_tax() {
  */
 function ml_review_boxes() {
 	add_meta_box('ml_review_meta', __('Product', 'media-libraries'), 'ml_review_meta', 'ml_review', 'side', 'high');
-	wp_enqueue_script('aml-review-script', plugins_url('/amazon-media-libraries/js/amazon.review.js'));
-	wp_enqueue_script('aml-metadata-script', plugins_url('/amazon-media-libraries/js/jquery.metadata.js'));
-	wp_enqueue_script('aml-rating-script', plugins_url('/amazon-media-libraries/js/jquery.rating.js'));
-	wp_enqueue_style('aml-rating-style', plugins_url('/amazon-media-libraries/css/jquery.rating.css'));
+	wp_enqueue_script('ml-review-script', plugins_url('/media-libraries/js/media.review.js'));
+	wp_enqueue_script('ml-metadata-script', plugins_url('/media-libraries/js/jquery.metadata.js'));
+	wp_enqueue_script('ml-rating-script', plugins_url('/media-libraries/js/jquery.rating.js'));
 }
 
 /**
@@ -107,16 +108,25 @@ function ml_review_meta ($post) {
 	$can_publish = current_user_can($post_type_object->cap->publish_posts);
 	$parent = isset($post->post_parent) ? $post->post_parent : 0;
 
-	$args = array('post_type' => 'ml_product', 'depth' => 1, 'echo' => 0, 'selected' => $parent, 'name' => 'parent_id',  'sort_column'=> 'menu_order,post_title');
+	$old_args = array('numberposts' => -1, 'fields' => 'id=>parent', 'post_type' => 'ml_review', 'author' => $post->post_author, 'exclude' => array($post->ID));
+	$old = get_posts($old_args);
+
+	$args = array('post_type' => 'ml_product', 'depth' => 1, 'echo' => 0, 'selected' => $parent, 'name' => 'parent_id',  'sort_column'=> 'menu_order,post_title', 'show_option_none' => __('None'), 'option_none_value' => -1, 'exclude' => $old);
 	$parents = wp_dropdown_pages($args);
 	if ( !empty($parents) ) {
-		echo '<p><strong>' . __('Parent') . '</strong></p>' .
-		'<label class="screen-reader-text" for="parent_id">' . __('Review', 'media-libraries') . '</label>' .
+		echo '<p><strong>' . __('Product to Review', 'media-libraries') . '</strong></p>' .
+		'<label class="screen-reader-text" for="parent_id">' . __('Product to Review', 'media-libraries') . '</label>' .
 		$parents;
 	}
 	$image = ($parent) ? '<img src="' . get_post_meta($parent, 'ml_image', true) . '" />' : '';
 	echo '<div id="ml_product-thumb">' . $image . '</div>';
-	review_stars();
+	review_stars($rating);
+
+	// flag for official review
+	if (current_user_can('edit_published_products', $post->ID)) {
+		$official = get_post_meta($post->post_parent, 'ml_official_review', true);
+		echo '<span id="ml_official-span"><input id="ml_official" name="ml_official" type="checkbox" value="official" ' . checked($official, $post->ID, false) . ' tabindex="4" /> <label for="ml_official" class="selectit">' . __('Mark as the official review.', 'media-libraries') . '</label><br /></span>';
+	}
 }
 
 /**
@@ -129,6 +139,13 @@ function ml_review_meta_postback ($post_id) {
 	if (('ml_review' == $req) && current_user_can('edit_review', $post_id)) {
 		$rating = (isset($_POST['ml_rating'])) ? floatval($_POST['ml_rating']) : null;
 		ml_update_meta('ml_rating', $post_id, $rating);
+
+		if (current_user_can('edit_published_products', $post_id)) {
+			if (isset($_POST['ml_official'])) {
+				$post = get_post($post_id);
+				ml_update_meta('ml_official_review', $post->post_parent, $post_id);
+			}
+		}
 	}
 }
 
@@ -140,6 +157,7 @@ function ml_review_meta_postback ($post_id) {
  */
 function ml_review_register_columns ($cols) {
 	$cols['product'] = 'Product';
+	$cols['rating'] = 'Rating';
 	return $cols;
 }
 
@@ -159,6 +177,17 @@ function ml_review_display_columns ($name, $post_id) {
 				$image = get_post_meta($parent, 'ml_image', true);
 				$image = (empty($image)) ? '' : '<br /><img src="'.$image.'" class="image_preview" />';
 				echo $product->post_title.'<div class="image">'.$image.'</div>';
+			}
+			break;
+		case 'rating':
+			$rating = get_post_meta($post_id, 'ml_rating', true);
+			wp_enqueue_script('ml-metadata-script', plugins_url('/media-libraries/js/jquery.metadata.js'));
+			wp_enqueue_script('ml-rating-script', plugins_url('/media-libraries/js/jquery.rating.js'));
+			review_stars($rating, true);
+
+			$official = get_post_meta($post->post_parent, 'ml_official_review', true);
+			if ($official) {
+				echo '<br /><b>' . __('Official Review', 'media-libraries') . '</b>';
 			}
 			break;
 	}
@@ -215,6 +244,8 @@ function ml_init_review() {
 	if (ml_get_option('use_categories')) {
 		register_taxonomy_for_object_type('category', 'ml_review');
 	}
+
+	wp_enqueue_style('ml-rating-style', plugins_url('/media-libraries/css/jquery.rating.css'));
 
 	add_action('manage_ml_review_posts_custom_column', 'ml_review_display_columns', 10, 2);
 	add_action('manage_edit-ml_review_columns', 'ml_review_register_columns');

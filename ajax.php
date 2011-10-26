@@ -103,7 +103,7 @@ function ml_shelf_live_search() {
 }
 
 function ml_ajax_get_image() {
-	$product = (isset($_POST['product'])) ? intval($_POST['product']) : 0;
+	$product = (isset($_POST['ml_product'])) ? intval($_POST['ml_product']) : 0;
 	echo ($product) ? get_post_meta($product, 'ml_image', true) : null;
 	die;
 }

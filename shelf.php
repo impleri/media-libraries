@@ -5,6 +5,14 @@
  */
 
 /**
+ * @todo
+ * Posting boxes: readings (unique products) on shelf (hover-over shows total times used?), addReading first searches db for existing products and gives link at bottom to search external sources
+ * BE list boxes: number of readings on the shelf split by status
+ * FE template: show thumbnails for all products with product details, and link to last usage
+ * FE widgets: random shelf, largest shelf, user's shelves (see older NRR widget)
+ */
+
+/**
  * Our custom shelf post_type
  */
 function ml_type_shelves() {
@@ -27,11 +35,10 @@ function ml_type_shelves() {
 			'description' => __('Users can organise shelves to show which products they use (e.g. a DVD shelf, a book shelf, etc).'),
 			'rewrite' => array('slug' => "$slug_base/$slug_shelf", 'pages' => true, 'feeds' => true, 'with_front' => false),
 			'show_in_menu' => 'edit.php?post_type=ml_product',
-			'capability_type' => array('shelf', 'shelves'),
+// 			'capability_type' => array('shelf', 'shelves'),
 			'register_meta_box_cb' => 'ml_shelf_boxes',
 			'supports' => array('title', 'author'),
 			'map_meta_cap' => true,
-			'menu_position' => 2,
 			'labels' => $labels,
 			'query_var' => true,
 			'public' => true,
@@ -57,7 +64,7 @@ function ml_shelf_boxes() {
  */
 function ml_shelf_mb_list($post) {
 	$args = array('post_id' => $post->ID);
-	$products = ml_shelf_page($args);
+	$products = ml_shelf_get_page($args);
 ?>
 <div class="ml_shelf_box">
 	<?php echo $products; ?>
@@ -137,7 +144,7 @@ function ml_shelf_search_products ($lookup) {}
 /**
  * Callback to get a page of products
  */
-function ml_shelf_page ($args) {
+function ml_shelf_get_page ($args) {
 	$post_id = (isset($args['post_id'])) ? $args['post_id'] : get_the_ID();
 	$page = (isset($args['page'])) ? intval($args['page']) : 1;
 	$perpage = (isset($args['perpage'])) ? intval($args['perpage']) : 10;
@@ -181,7 +188,7 @@ function &ml_get_products ($args=null) {
  * Register the actions for our product post_type
  */
 function ml_init_shelf() {
-	require_once dirname(__FILE__) . '/shelf-template.php';
+ 	require_once dirname(__FILE__) . '/shelf-template.php';
 
 	ml_type_shelves();
 
@@ -189,7 +196,6 @@ function ml_init_shelf() {
 	add_action('manage_edit-ml_shelf_columns', 'ml_shelf_register_columns');
 	add_action('right_now_content_table_end', 'ml_shelf_right_now');
 }
-add_action('init', 'ml_init_product');
 
 ml_init_shelf();
 

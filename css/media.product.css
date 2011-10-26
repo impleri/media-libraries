@@ -1,11 +1,11 @@
-#aml_search_string-prompt-text, #aml_lookup_string-prompt-text {
+#ml_search_string-prompt-text, #ml_lookup_string-prompt-text {
 	padding: 8x;
 	position: absolute;
 	color: #bbb;
 	font-size: 1.2em;
 }
 
-.aml-list-item {
+.ml-list-item {
 	border: 1px solid black;
 	overflow: auto;
 	clear:both;
@@ -13,47 +13,47 @@
 	width: 80%;
 	max-width: 800px;
 }
-.aml-item-image {}
-.aml-item-details {
+.ml-item-image {}
+.ml-item-details {
 	float:right;
 	width: 75%;
 }
-.aml-item-title {
+.ml-item-title {
 	font-weight: bold;
 	font-size: +2em;
 }
-.aml-item-people {}
-.aml-item-people-names {
+.ml-item-people {}
+.ml-item-people-names {
 	font-style: italic;
 }
-.aml-item-asin {}
-.aml-item-link {}
-.aml-item {
+.ml-item-asin {}
+.ml-item-link {}
+.ml-item {
 	border: 2px dashed gray;
 	background-color: white;
 	width: 30%;
 	margin: 15px 0;
 }
-.aml-hover {
+.ml-hover {
 	background-color: yellow;
 }
 
-#aml_search_button {
+#ml_search_button {
 	float: left;
 }
 
-#aml_search_reset {
+#ml_search_reset {
 	float: right;
 }
 
-.aml_search_box {
+.ml_search_box {
 /*	overflow: auto;*/
 }
 
-#aml_image, #aml_link, #aml_asin {
+#ml_image, #ml_link, #ml_asin {
 	width: 250px;
 }
 
-#aml_image_preview {
+#ml_image_preview {
 	text-align: center;
 }

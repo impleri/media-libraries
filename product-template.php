@@ -35,165 +35,199 @@ function ml_person_taxonomy_template ($template) {
 	return ml_insert_template ($template, 'ml_person', 'taxonomy');
 }
 
-// Still not working and subject to change
-
 /**
- * Retrieve post title.
+ * Retrieve product image
  *
- * If the post is protected and the visitor is not an admin, then "Protected"
- * will be displayed before the post title. If the post is private, then
- * "Private" will be located before the post title.
+ * Get the product image URL if it exists
  *
  * @param int $id Optional. Post ID.
  * @return string
  */
 function get_the_product_image ($id=0) {
-	$post = &get_post($id);
+	$post = get_post($id);
 
-	$image = isset($post->post_title) ? $post->post_title : '';
 	$id = isset($post->ID) ? $post->ID : (int) $id;
+	$image = get_post_meta($id, 'ml_image', true);
 
-	return apply_filters( 'the_title', $image, $id );
+	return apply_filters('the_image', $image, $id);
 }
 
 /**
- * Display or retrieve the current post title with optional content.
+ * Display or retrieve the current product image with optional content.
  *
- * @param string $before Optional. Content to prepend to the title.
- * @param string $after Optional. Content to append to the title.
- * @param bool $echo Optional, default to true.Whether to display or return.
- * @return null|string Null on no title. String if $echo parameter is false.
+ * @param string $before Optional. Content to prepend to the image URL.
+ * @param string $after Optional. Content to append to the image URL.
+ * @param bool $echo Optional, default to true. Whether to display or return.
+ * @return null|string Null on no image. String if $echo parameter is false.
  */
-function the_product_image ($before = '', $after = '', $echo = true) {
+function the_product_image ($before='', $after='', $echo=true) {
 	$image = get_the_product_image();
 
-	if ( strlen($image) == 0 )
+	if (strlen($image)==0) {
 		return;
+	}
 
 	$image = $before . $image . $after;
 
-	if ( $echo )
+	if ($echo) {
 		echo $image;
-	else
+	}
+	else {
 		return $image;
+	}
 }
 
 /**
- * Retrieve post title.
+ * Retrieve the people for a post.
  *
- * If the post is protected and the visitor is not an admin, then "Protected"
- * will be displayed before the post title. If the post is private, then
- * "Private" will be located before the post title.
+ * @uses apply_filters() Calls 'get_the_people' filter on the list of people tags.
+ *
+ * @param int $id Post ID.
+ * @return array
+ */
+function get_the_people ($id=0) {
+	return apply_filters( 'get_the_people', get_the_terms($id, 'ml_person'));
+}
+
+/**
+ * Retrieve the people for a product formatted as a string.
+ *
+ * @uses apply_filters() Calls 'the_people' filter on string list of people.
+ *
+ * @param string $before Optional. Before people.
+ * @param string $sep Optional. Between people.
+ * @param string $after Optional. After people.
+ * @return string
+ */
+function get_the_people_list ($id=0, $before='', $sep='', $after='') {
+	$people = get_the_people($id);
+
+	if (is_wp_error($people)) {
+		return $people;
+	}
+
+	if (empty($people)) {
+		return false;
+	}
+
+	foreach ( $people as $term ) {
+		$link = get_term_link($term, 'ml_person');
+		if (is_wp_error($link)) {
+			return $link;
+		}
+		$people_links[] = '<a href="' . $link . '" rel="tag">' . $term->name . '</a>';
+	}
+
+	$people_links = apply_filters('term_links-ml-person', $people_links);
+
+	return $before . join($sep, $people_links) . $after;
+}
+
+/**
+ * Retrieve the people for a product.
+ *
+ * @param int $id Post ID.
+ * @param string $before Optional. Before list.
+ * @param string $sep Optional. Separate items using this.
+ * @param string $after Optional. After list.
+ * @return string
+ */
+function the_people ($id=0, $before=null, $sep=', ',$after = '') {
+		$people = get_the_people_list($id, $before, $sep, $after);
+
+	if (is_wp_error($people)) {
+		return false;
+	}
+
+	echo apply_filters('the_people', $people, $before, $sep, $after);
+}
+
+/**
+ * Retrieve product type
+ *
+ * Get the product type
  *
  * @param int $id Optional. Post ID.
  * @return string
  */
-function get_the_product_title ($id=0) {
-	$post = &get_post($id);
+function get_the_product_type ($id=0) {
+	$post = get_post($id);
+	$type = get_post_meta($post->ID, 'ml_type', true);
+	$type = isset($type) ? $type : 'b';
+	$types = ml_product_categories();
 
-	$image = isset($post->post_title) ? $post->post_title : '';
-	$id = isset($post->ID) ? $post->ID : (int) $id;
-
-	return apply_filters( 'the_title', $image, $id );
+	return apply_filters('the_product_type', $types[$type]);
 }
 
 /**
- * Display or retrieve the current post title with optional content.
+ * Display or retrieve the current product type with optional content.
  *
- * @param string $before Optional. Content to prepend to the title.
- * @param string $after Optional. Content to append to the title.
- * @param bool $echo Optional, default to true.Whether to display or return.
- * @return null|string Null on no title. String if $echo parameter is false.
+ * @param string $before Optional. Content to prepend to the type.
+ * @param string $after Optional. Content to append to the type.
+ * @param bool $echo Optional, default to true. Whether to display or return.
+ * @return null|string Null on no type. String if $echo parameter is false.
  */
-function the_product_title ($before = '', $after = '', $echo = true) {
-	$image = get_the_title();
+function the_product_type ($before='', $after='', $echo=true) {
+	$type = get_the_product_type();
 
-	if ( strlen($image) == 0 )
+	if (strlen($type)==0) {
 		return;
+	}
 
-	$image = $before . $image . $after;
+	$type = $before . $type . $after;
 
-	if ( $echo )
-		echo $image;
-	else
-		return $image;
-}
-
-// related posts
-
-/**
- * Returns true if the current book is linked to a post, false if it isn't.
- */
-function product_has_post() {
-    global $book;
-
-    return ( $book->post > 0 );
+	if ($echo) {
+		echo $type;
+	}
+	else {
+		return $type;
+	}
 }
 
 /**
- * Returns or prints the permalink of the post linked to the current book.
- * @param bool $echo Whether or not to echo the results.
+ * Retrieve product link
+ *
+ * Get the product source URL if it exists
+ *
+ * @param int $id Optional. Post ID.
+ * @return string
  */
-function product_post_url ($echo=true) {
-    global $book;
+function get_the_product_link ($id=0) {
+	$post = get_post($id);
 
-    if ( !book_has_post() )
-        return;
+	$id = isset($post->ID) ? $post->ID : (int) $id;
+	$link = get_post_meta($id, 'ml_link', true);
 
-    $permalink = get_permalink($book->post);
-
-    if ( $echo )
-        echo $permalink;
-    return $permalink;
+	return apply_filters('the_product_link', $link, $id);
 }
 
 /**
- * Returns or prints the title of the post linked to the current book.
- * @param bool $echo Whether or not to echo the results.
+ * Display or retrieve the current product link with optional content.
+ *
+ * @param string $before Optional. Content to prepend to the source URL.
+ * @param string $after Optional. Content to append to the source URL.
+ * @param bool $echo Optional, default to true. Whether to display or return.
+ * @return null|string Null on no image. String if $echo parameter is false.
  */
-function product_post_title ($echo=true) {
-    global $book;
+function the_product_link ($before='', $after='', $echo=true) {
+	$link = get_the_product_link();
 
-    if ( !book_has_post() )
-        return;
+	if (strlen($link)==0) {
+		return;
+	}
 
-    $post = get_post($book->post);
+	$link = $before . $link . $after;
 
-    if ( $echo )
-        echo $post->post_title;
-    return $post->post_title;
+	if ($echo) {
+		echo $link;
+	}
+	else {
+		return $link;
+	}
 }
 
-/**
- * If the current book is linked to a post, prints an HTML link to said post.
- * @param bool $echo Whether or not to echo the results.
- */
-function product_post_link ($echo=true) {
-    global $book;
 
-    if ( !book_has_post() )
-        return;
-
-    $link = '<a href="' . book_post_url(0) . '">' . book_post_title(0) . '</a>';
-
-    if ( $echo )
-        echo $link;
-    return $link;
-}
-
-// edit url
-
-/**
- * If the user has the correct permissions, prints a URL to the review-writing screen for the current book.
- * @param bool $echo Whether or not to echo the results.
- */
-function product_edit_url ($echo=true) {
-    global $book, $nr_url;
-    if ( can_now_reading_admin() )
-        echo apply_filters('book_edit_url', $nr_url->urls['manage'] . '&amp;action=editsingle&amp;id=' . $book->id);
-}
-
-// counts
+// everything below is unstable
 
 /**
  * Prints the total number of books in the library.

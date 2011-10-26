@@ -24,6 +24,15 @@ function ml_default_options() {
 	));
 }
 
+function ml_product_categories() {
+	return array(
+		'b' => __('Books', 'media-libraries'),
+		'v' => __('Video', 'media-libraries'),
+		'm' => __('Music', 'media-libraries'),
+		'g' => __('Video Games', 'media-libraries'),
+	);
+}
+
 /**
  * shortcut for handling meta updates
  *
@@ -32,13 +41,13 @@ function ml_default_options() {
  * @param mixed new value (default is null)
  * @return bool true on success
  */
-function ml_update_meta ($field, $post, $new=null) {
-	$old = get_post_meta($post, $field, true);
+function ml_update_meta ($field, $post, $new=null, $single=true) {
+	$old = get_post_meta($post, $field, $single);
 	if(empty($new)) {
 		$ret = delete_post_meta($post, $field, $old);
 	}
 	elseif (empty($old)) {
-		$ret = add_post_meta($post, $field, $new);
+		$ret = add_post_meta($post, $field, $new, $single);
 	}
 	elseif ($new != $old) {
 		$ret = update_post_meta($post, $field, $new, $old);
@@ -141,7 +150,8 @@ function ml_options_page() {
 function ml_options_validate ($ml_post) {
 	$options = get_option('ml_options');
 	$defaults = ml_default_options();
-	$valid = do_action('ml-options-validate', $ml_post);
+	$valid = array();
+	$valid = apply_filters('ml-options-validate', $valid, $ml_post);
 	//TODO: more validation!
 
 	// Display fields
@@ -233,6 +243,7 @@ function ml_slug_shelf_field() {
  * @todo check once more
  */
 function ml_options_init() {
+	add_menu_page( __('Media Libraries', 'media-libraries'), __('Libraries', 'media-libraries'), 'edit_posts', 'edit.php?post_type=ml_product', '', '', 15);
 	$default_options = ml_default_options();
 	$options = get_option('ml_options', ml_default_options());
 	$options = (false === $options) ? array() : $options;

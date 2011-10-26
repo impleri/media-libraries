@@ -7,7 +7,10 @@
 
 /**
  * @todo
- * BE widgets: status, addProduct, addToShelf
+ * Posting boxes: hack wp submit box, status/timestamps, auto product image, shelf
+ * BE list boxes: product, shelf, status/timestamps
+ * BE quick edit box: product, shelf, status/timestamps
+ * NO FRONTEND
  */
 
 /**
@@ -34,7 +37,7 @@ function ml_usage_type() {
 		'supports' => array('author'),
 		'show_in_menu' => 'edit.php?post_type=ml_product',
 		'register_meta_box_cb' => 'ml_usage_boxes',
-		'capability_type' => 'usage',
+// 		'capability_type' => 'usage',
 		'map_meta_cap' => true,
 		'hierarchical' => false,
 		'query_var' => true,
@@ -244,7 +247,7 @@ function ml_usage_display_columns ($name, $post_id) {
 	}
 }
 
-function ml_page_help() {
+/* function ml_page_help() {
 	$post_type = isset($_GET['post_type']) ? $_GET['post_type'] : '';
 	if ('ml_usage' == $post_type) {
 		$screen = get_current_screen();
@@ -260,7 +263,7 @@ function ml_page_help() {
 			'<p>' . __('<a href="http://wordpress.org/support/" target="_blank">Support Forums</a>') . '</p>'
 		);
 	}
-}
+} */
 
 /**
  * initialise and register the actions for usage post_type
@@ -273,5 +276,9 @@ function ml_init_usage() {
 	add_action('manage_edit-ml_usage_columns', 'ml_usage_register_columns');
 	add_action('right_now_content_table_end', 'ml_usage_right_now');
 	add_action('save_post', 'ml_usage_meta_postback');
-	add_action('admin_head-edit.php', 'ml_page_help');
+// 	add_action('admin_head-edit.php', 'ml_page_help');
 }
+
+ml_init_usage();
+
+?>
