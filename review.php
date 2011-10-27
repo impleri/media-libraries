@@ -124,8 +124,8 @@ function ml_review_meta ($post) {
 
 	// flag for official review
 	if (current_user_can('edit_published_products', $post->ID)) {
-		$official = get_post_meta($post->post_parent, 'ml_official_review', true);
-		echo '<span id="ml_official-span"><input id="ml_official" name="ml_official" type="checkbox" value="official" ' . checked($official, $post->ID, false) . ' tabindex="4" /> <label for="ml_official" class="selectit">' . __('Mark as the official review.', 'media-libraries') . '</label><br /></span>';
+		$official = get_post_meta($post->post_parent, 'ml_official_review');
+		echo '<span id="ml_official-span"><input id="ml_official" name="ml_official" type="checkbox" value="official" ' . checked(in_array($post->ID, $official), true, false) . ' tabindex="4" /> <label for="ml_official" class="selectit">' . __('Mark as the official review.', 'media-libraries') . '</label><br /></span>';
 	}
 }
 

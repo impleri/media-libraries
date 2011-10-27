@@ -34,6 +34,24 @@ get_header(); ?>
 						</footer><!-- .entry-meta -->
 
 						<!-- reviews -->
+						<?php if ( have_reviews() ) : ?>
+							<h3 id="reviews"><?php	printf( _n( 'One Response to %2$s', '%1$s Responses to %2$s', get_reviews_number() ),
+								number_format_i18n( get_reviews_number() ), '&#8220;' . get_the_title() . '&#8221;' ); ?></h3>
+
+							<div class="navigation">
+								<div class="alignleft"><?php previous_reviews_link() ?></div>
+								<div class="alignright"><?php next_reviews_link() ?></div>
+							</div>
+
+							<ol class="reviewlist">
+							<?php wp_list_reviews();?>
+							</ol>
+
+							<div class="navigation">
+								<div class="alignleft"><?php previous_reviews_link() ?></div>
+								<div class="alignright"><?php next_reviews_link() ?></div>
+							</div>
+						<?php endif;?>
 
 						<!-- reading stats (restrict to $_REQUEST['user_id'] if it exists) -->
 					</article><!-- #post-<?php the_ID(); ?> -->

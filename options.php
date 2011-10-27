@@ -91,31 +91,29 @@ function ml_get_option ($key='', $def=null) {
  * hack to use our templates
  *
  * @param string found template (passed from the filter)
- * @param string type of taxonomy to check
+ * @param string type of custom post/taxonomy to check
  * @param string type of page (archive, single, or taxonomy)
  * @return string path to template
  */
-function ml_insert_template ($template, $check, $page='archive') {
+function ml_insert_template ($template, $type, $page='archive') {
 	if ($page == 'taxonomy') {
 		$term = get_queried_object();
-		$type = $term->taxonomy;
+		$check = $term->taxonomy;
 	}
 	else {
-		$type = get_query_var('post_type');
+		$check = get_query_var('post_type');
 	}
 
-	// not ours to worry about!
-	if ($check != $type) {
-		return $template;
-	}
+	// one of ours to worry about!
+	if ($check == $type) {
+		$file = $page.'-'.$type.'.php';
 
-	$file = $page.'-'.$check.'.php';
-
-	// template not found in theme folder, so insert our default
-	if ($file != basename($template)) {
-		$path = dirname(__FILE__) . '/templates/' . $file;
-		if ( file_exists($path)) {
-			return $path;
+		// template not found in theme folder, so replace it with our default
+		if ($file != basename($template)) {
+			$path = dirname(__FILE__) . '/templates/' . $file;
+			if ( file_exists($path)) {
+				$template = $path;
+			}
 		}
 	}
 

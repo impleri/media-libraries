@@ -3,8 +3,9 @@ Contributors: impleri
 Tags: books, videos, music, games, film, movies, reviews, media, widget, amazon, library
 Requires at least: 3.0
 Tested up to: 3.2
+Stable tag: trunk
 
-Allows you to organise books, videos/DVDs, music/CDs, and video games found on external websites (e.g. Amazon) into library shelves and create user reviews of these products.
+Allows you to organise books, videos, music, and games found on external websites into shelves and create user reviews for them.
 
 
 == Description ==
@@ -53,8 +54,9 @@ The main difference is that a review only occurs one per product per user. A sin
 * Renamed to Media Libraries (was Amazon Media Libraries)
 * Allow multiple source providers (the Amazon provider is included in the package)
 * Added feature to use multiple shelves
-* Separated readings and reviews
+* Separated usage (readings/etc) and reviews
 * Initial template files and functions
+* Better handling of usage times
 
 = 0.9.2 =
 * First beta release
@@ -78,6 +80,12 @@ The main difference is that a review only occurs one per product per user. A sin
 * Manage page now does quick edits
 * URL rewriting modified so that a (custom) menu names can used
 
+== Screenshots == 
+
+1. The admin product listing
+2. The admin review entry page
+3. A posted product page
+4. Options page
 
 == Roadmap ==
 
