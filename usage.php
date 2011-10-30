@@ -269,6 +269,7 @@ function ml_usage_display_columns ($name, $post_id) {
  * initialise and register the actions for usage post_type
  */
 function ml_init_usage() {
+	require_once dirname(__FILE__) . '/usage-template.php';
 	ml_usage_type();
 	ml_usage_stati();
 

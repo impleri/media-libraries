@@ -9,7 +9,7 @@
  * @todo
  * Posting boxes: clean up search & results boxes
  * BE quick edit box: link to image, link to product source
- * FE template: contextPeople, metaDetails, 'official' review, excerpts for other reviews with links, link to add/edit review, link to add reading (or edit if one is onhold or in process)
+ * FE template: metaDetails, link to add/edit review, link to add reading (or edit if one is onhold or in process)
  * FE widgets: random product, most popular products (by number of reviews or usages)
  */
 

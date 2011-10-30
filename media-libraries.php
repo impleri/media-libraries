@@ -71,12 +71,13 @@ function ml_init() {
 		return;
 	}
 
+	require_once dirname(__FILE__) . '/functions.php'; // functions
 	require_once dirname(__FILE__) . '/roles.php'; // auths first!
 	require_once dirname(__FILE__) . '/product.php'; // adds products and people
 	require_once dirname(__FILE__) . '/review.php'; // adds reviews
 	require_once dirname(__FILE__) . '/usage.php'; // adds readings
 	require_once dirname(__FILE__) . '/shelf.php'; // adds shelves
-// 	require_once dirname(__FILE__) . '/user.php'; // users (front-end only)
+ 	require_once dirname(__FILE__) . '/user.php'; // users (front-end only)
 // 	include_once dirname(__FILE__) . '/widgets.php'; // the widgets
 
 	// finally amazon connector and ajax if in the admin side (not needed on frontend side)

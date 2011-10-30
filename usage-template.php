@@ -247,72 +247,6 @@ function ml_touch_time($time, $which, $echo=true ) {
 }
 
 /**
- * Display or retrieve the current post title with optional content.
- *
- * @since 0.71
- *
- * @param string $before Optional. Content to prepend to the title.
- * @param string $after Optional. Content to append to the title.
- * @param bool $echo Optional, default to true.Whether to display or return.
- * @return null|string Null on no title. String if $echo parameter is false.
- */
-function the_product_image ($before = '', $after = '', $echo = true) {
-	$title = get_the_product_image();
-
-	if ( strlen($title) == 0 )
-		return;
-
-	$title = $before . $title . $after;
-
-	if ( $echo )
-		echo $title;
-	else
-		return $title;
-}
-
-/**
- * Retrieve post title.
- *
- * If the post is protected and the visitor is not an admin, then "Protected"
- * will be displayed before the post title. If the post is private, then
- * "Private" will be located before the post title.
- *
- * @since 0.71
- *
- * @param int $id Optional. Post ID.
- * @return string
- */
-function get_the_product_image ($id=0) {
-	$post = &get_post($id);
-
-	$title = isset($post->post_title) ? $post->post_title : '';
-	$id = isset($post->ID) ? $post->ID : (int) $id;
-
-	if ( !is_admin() ) {
-		if ( !empty($post->post_password) ) {
-			$protected_title_format = apply_filters('protected_title_format', __('Protected: %s'));
-			$title = sprintf($protected_title_format, $title);
-		} else if ( isset($post->post_status) && 'private' == $post->post_status ) {
-			$private_title_format = apply_filters('private_title_format', __('Private: %s'));
-			$title = sprintf($private_title_format, $title);
-		}
-	}
-	return apply_filters( 'the_title', $title, $id );
-}
-
-/**
- * Prints the date when the book was added to the database.
- * @param bool $echo Whether or not to echo the results.
- */
-function product_added ($echo=true) {
-    global $book;
-    $added = apply_filters('book_added', $book->added);
-    if ( $echo )
-        echo $added;
-    return $added;
-}
-
-/**
  * Prints the date when the book was added to the database.
  * @param bool $echo Whether or not to echo the results.
  */
@@ -407,3 +341,7 @@ function usage_status ( $echo = true, $unread = '', $reading = '', $read = '', $
         echo $text;
     return $text;
 }
+
+
+function the_product_usage () {}
+

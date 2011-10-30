@@ -120,7 +120,7 @@ function ml_review_meta ($post) {
 	}
 	$image = ($parent) ? '<img src="' . get_post_meta($parent, 'ml_image', true) . '" />' : '';
 	echo '<div id="ml_product-thumb">' . $image . '</div>';
-	review_stars($rating);
+	ml_review_stars($rating);
 
 	// flag for official review
 	if (current_user_can('edit_published_products', $post->ID)) {
@@ -144,6 +144,10 @@ function ml_review_meta_postback ($post_id) {
 			if (isset($_POST['ml_official'])) {
 				$post = get_post($post_id);
 				ml_update_meta('ml_official_review', $post->post_parent, $post_id);
+			}
+			else {
+				$post = get_post($post_id);
+				delete_post_meta($post->post_parent, 'ml_official_review', $post_id);
 			}
 		}
 	}
@@ -183,7 +187,7 @@ function ml_review_display_columns ($name, $post_id) {
 			$rating = get_post_meta($post_id, 'ml_rating', true);
 			wp_enqueue_script('ml-metadata-script', plugins_url('/media-libraries/js/jquery.metadata.js'));
 			wp_enqueue_script('ml-rating-script', plugins_url('/media-libraries/js/jquery.rating.js'));
-			review_stars($rating, true);
+			ml_review_stars($rating, true);
 
 			$official = get_post_meta($post->post_parent, 'ml_official_review', true);
 			if ($official) {

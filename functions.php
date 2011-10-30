@@ -146,6 +146,6 @@ function products_used_since ($interval, $echo=true) {
 }
 
 
-function the_library_stats() {}
+function the_library_header() {}
 
 // Pure PHP files should not have a closing PHP tag!!
