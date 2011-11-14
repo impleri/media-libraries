@@ -465,27 +465,3 @@ function previous_reviews_link( $label = '' ) {
 function product_shelf_listing() {
 
 }
-
-
-function product_shelf_image ($prod, $before='', $after='') {
-	$image = get_post_meta($prod->ID, 'ml_image', true);
-	$link = get_post_meta($prod->ID, 'ml_link', true);
-	$asin = get_post_meta($prod->ID, 'ml_asin', true);
-	$edit_link = '';
-	$people = get_the_term_list($prod->ID, 'ml_person', '<span class="ml_product-people">', ', ', '</span></br>');
-
-	$html = $before;
-	$html .= '<a href="'.$edit_link.'">';
-	$html .= '<img src="'.$image.'" /><br />';
-	$html .= '<span class="ml_product-title">' . $prod->title . '</span></a><br />';
-	$html .= $people;
-	if (!empty($asin)) {
-		$html .= '<span class="ml_product-link">';
-		if (!empty($link)) {
-		$asin = '<a href="'.$link.'">'.$asin.'</a>';
-		}
-		$html .= $asin . '</a>';
-	}
-	$html .= $after . "\n";
-	return $html;
-}

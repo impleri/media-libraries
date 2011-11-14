@@ -3,14 +3,14 @@ Contributors: impleri
 Tags: books, videos, music, games, film, movies, reviews, media, widget, amazon, library
 Requires at least: 3.0
 Tested up to: 3.2
-Stable tag: trunk
+Stable tag: 0.9.5
 
 Allows you to organise books, videos, music, and games found on external websites into shelves and create user reviews for them.
 
 
 == Description ==
 
-**WARNING**: This project is still in development and is currently not ready for production use. Please install at your own risk. The current version intends to be a rudimentary framework. Do not expect everything to work.
+**WARNING**: This project is still in development and is not quite ready for production use. Please install at your own risk.
 
 With Media Libraries, you can manage multiple library shelves of your current media, keeping track of when you've last used them, and how often you have used them. If you wish to use the same item on different shelves (e.g. a book you once read for school/work but also once read separately for fun), this is also possible. Users can also provide their own reviews, and library admins can flag reviews as official site reviews to differentiate them from other reviews.
 
@@ -21,17 +21,14 @@ Media Libraries is a complete rewrite of the Now Reading series of plugins ([Rob
 
 == Installation ==
 
-1. Upload media-libraries` to the `/wp-content/plugins/` directory
-2. Activate the plugin through the 'Plugins' menu in WordPress
+1. Upload `media-libraries` to the `/wp-content/plugins/` directory
+1. Copy/move `media-libraries/amazon/` directory to the `/wp-content/plugins/` directory
+2. Activate the Media Libraries plugin through the 'Plugins' menu in WordPress
 3. Activate at least one source provider plugin (Amazon is included) through the 'Plugins' menu in WordPress
 4. Make any changes the to provided template files and store them in your theme directory
 
 
 == Frequently Asked Questions ==
-
-= Why are you releasing unfinished code? =
-
-There are two reasons for this. First, I would like to receive feedback on the pieces that do work. Secondly, I want to show that there is progress being made. Once this gets to version 0.9.5, I hope to have discoered all major difficulties so that it is a stable plugin already 'finished'.
 
 = Why does it take a long time to update the Subversion repository? =
 
@@ -43,9 +40,9 @@ The premade templates (`/templates/`) that are included were made for the defaul
 
 My suggestion to those who are having trouble is to open up the template (such as `archive-ml_product.php`) side-by-side with one of your standard theme templates, and make sure that the markup matches.
 
-= What is the difference between a review and a reading? =
+= What is the difference between a review and a usage? =
 
-The main difference is that a review only occurs one per product per user. A single user cannot write multiple reviews for the same product. However, a user can have multiple readings on multiple shelves (or the same shelf), but each of these will link to only one review. Additionally, readings do not have pages in the frontend. They are listed on review and shelf pages.
+The main difference is that a review only occurs one per product per user. A single user cannot write multiple reviews for the same product. However, a user can have multiple usage on multiple shelves (or the same shelf), but each of these will link to only one review. Additionally, usage do not have pages in the frontend. They are listed on review and shelf pages.
 
 == Changelog ==
 
@@ -80,7 +77,7 @@ The main difference is that a review only occurs one per product per user. A sin
 * Manage page now does quick edits
 * URL rewriting modified so that a (custom) menu names can used
 
-== Screenshots == 
+== Screenshots ==
 
 1. The admin product listing
 2. The admin review entry page
@@ -92,14 +89,16 @@ The main difference is that a review only occurs one per product per user. A sin
 = 0.9.5 =
 * First release candidate
 * Widgets
+* Add Single-User and Single-Shelf mode
+* Role/auth management
 * Import from Now Reading, Now Reading Reloaded, and Now Watching plugins
 
 = 0.9.7 =
 * Second release candidate
 * UI cleanup
-* Better role/auth management
 
 
 == Template Files ==
 
-The `templates` folder of the Amazon Media Libraries plugin contains a default set of templates (based on TwentyEleven) for displaying your product data in various places (sidebar, library, etc.).  These are hacked into the template process, meant to be overridden by copying them into a template folder and modifying them.
+The `templates` folder of the Amazon Media Libraries plugin contains a default set of templates (based on TwentyEleven) for displaying your library pages.  These are hacked into the template process, meant to be overridden by copying them into a template folder and modifying them.
+

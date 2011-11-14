@@ -90,9 +90,9 @@ function ml_tag_tax() {
  */
 function ml_review_boxes() {
 	add_meta_box('ml_review_meta', __('Product', 'media-libraries'), 'ml_review_meta', 'ml_review', 'side', 'high');
-	wp_enqueue_script('ml-review-script', plugins_url('/media-libraries/js/media.review.js'));
-	wp_enqueue_script('ml-metadata-script', plugins_url('/media-libraries/js/jquery.metadata.js'));
-	wp_enqueue_script('ml-rating-script', plugins_url('/media-libraries/js/jquery.rating.js'));
+	wp_enqueue_script('ml-review-script', plugins_url('/js/media.review.js', __FILE__));
+	wp_enqueue_script('ml-metadata-script', plugins_url('/js/jquery.metadata.js', __FILE__));
+	wp_enqueue_script('ml-rating-script', plugins_url('/js/jquery.rating.js', __FILE__));
 }
 
 /**
@@ -103,15 +103,12 @@ function ml_review_boxes() {
  */
 function ml_review_meta ($post) {
 	$rating = get_post_meta($post->ID, 'ml_rating', true);
-
-	$post_type_object = get_post_type_object($post->post_type);
-	$can_publish = current_user_can($post_type_object->cap->publish_posts);
 	$parent = isset($post->post_parent) ? $post->post_parent : 0;
 
 	$old_args = array('numberposts' => -1, 'fields' => 'id=>parent', 'post_type' => 'ml_review', 'author' => $post->post_author, 'exclude' => array($post->ID));
 	$old = get_posts($old_args);
 
-	$args = array('post_type' => 'ml_product', 'depth' => 1, 'echo' => 0, 'selected' => $parent, 'name' => 'parent_id',  'sort_column'=> 'menu_order,post_title', 'show_option_none' => __('None'), 'option_none_value' => -1, 'exclude' => $old);
+	$args = array('post_type' => 'ml_product', 'depth' => 1, 'echo' => 0, 'selected' => $parent, 'name' => 'parent_id',  'sort_column'=> 'menu_order,post_title', 'exclude' => $old);
 	$parents = wp_dropdown_pages($args);
 	if ( !empty($parents) ) {
 		echo '<p><strong>' . __('Product to Review', 'media-libraries') . '</strong></p>' .
@@ -185,8 +182,8 @@ function ml_review_display_columns ($name, $post_id) {
 			break;
 		case 'rating':
 			$rating = get_post_meta($post_id, 'ml_rating', true);
-			wp_enqueue_script('ml-metadata-script', plugins_url('/media-libraries/js/jquery.metadata.js'));
-			wp_enqueue_script('ml-rating-script', plugins_url('/media-libraries/js/jquery.rating.js'));
+			wp_enqueue_script('ml-metadata-script', plugins_url('/js/jquery.metadata.js', __FILE__));
+			wp_enqueue_script('ml-rating-script', plugins_url('/js/jquery.rating.js', __FILE__));
 			ml_review_stars($rating, true);
 
 			$official = get_post_meta($post->post_parent, 'ml_official_review', true);
@@ -249,13 +246,13 @@ function ml_init_review() {
 		register_taxonomy_for_object_type('category', 'ml_review');
 	}
 
-	wp_enqueue_style('ml-rating-style', plugins_url('/media-libraries/css/jquery.rating.css'));
+	wp_enqueue_style('ml-rating-style', plugins_url('/css/jquery.rating.css', __FILE__));
 
 	add_action('manage_ml_review_posts_custom_column', 'ml_review_display_columns', 10, 2);
 	add_action('manage_edit-ml_review_columns', 'ml_review_register_columns');
 	add_action('right_now_content_table_end', 'ml_review_right_now');
 	add_action('save_post', 'ml_review_meta_postback');
-	add_action('admin_head-edit.php', 'ml_page_help');
+// 	add_action('admin_head-edit.php', 'ml_page_help');
 }
 
 ml_init_review();

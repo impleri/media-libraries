@@ -11,29 +11,14 @@
  * reading: many-to-one product, many-to-one review, many-to-many shelf
  * review: many-to-one product (one per user), one-to-many reading
  * shelf: many-to-many reading
- */
-
-/**
- * Create review
  *
- * connect a review to a product
- * @param int review ID
- * @param int product ID
- * @return bool True on success
+ * product-review: product is post_parent of review
+ * product-reading: product is post_parent of reading
+ * product-shelf: no direct relation (indirect through reading:shelf)
+ * reading-review: no direct relation (indirect through product)
+ * reading-shelf: reading is metadata for shelf
+ * review-shelf: no direct relation (indirect through shelf:reading--reading:product relation)
  */
-function linkReview($review, $product) {}
-
-/**
- * Create reading
- *
- * connect a reading to a product and shelf
- * @param int reading ID
- * @param int shelf ID
- * @param int product ID
- * @return bool True on success
- */
-function linkReading($reading, $shelf, $product) {}
-
 
 /**
  * Prints the total number of books in the library.

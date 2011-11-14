@@ -95,3 +95,12 @@ add_action('init', 'ml_init');
 add_action('admin_menu', 'ml_options_init', 9);
 
 // Pure PHP files should not have a closing PHP tag!!
+
+function ml_dump ($var, $value='') {
+	echo '<div>';
+	if (!empty($value)) {
+		echo '<p>' . $value . ':</p>';
+	}
+	echo '<pre>' . var_export($var, 1) . '</pre>';
+	echo '</div>';
+}
