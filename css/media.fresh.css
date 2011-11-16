@@ -1,3 +1,7 @@
+#main {
+	overflow: hidden;
+}
+
 .shelf-name {
 	background-color: #f1f1f1; /* Fallback */
 	background-image: -ms-linear-gradient(top, #f9f9f9, #ececec); /* IE10 */

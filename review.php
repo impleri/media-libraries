@@ -122,6 +122,7 @@ function ml_review_meta ($post) {
 	// flag for official review
 	if (current_user_can('edit_published_products', $post->ID)) {
 		$official = get_post_meta($post->post_parent, 'ml_official_review');
+		$official = is_array($official) ? $official : array();
 		echo '<span id="ml_official-span"><input id="ml_official" name="ml_official" type="checkbox" value="official" ' . checked(in_array($post->ID, $official), true, false) . ' tabindex="4" /> <label for="ml_official" class="selectit">' . __('Mark as the official review.', 'media-libraries') . '</label><br /></span>';
 	}
 }
@@ -135,12 +136,12 @@ function ml_review_meta_postback ($post_id) {
 	$req = isset($_REQUEST['post_type']) ? $_REQUEST['post_type'] : '';
 	if (('ml_review' == $req) && current_user_can('edit_review', $post_id)) {
 		$rating = (isset($_POST['ml_rating'])) ? floatval($_POST['ml_rating']) : null;
-		ml_update_meta('ml_rating', $post_id, $rating);
+		update_post_meta($post_id, 'ml_rating', $rating);
 
 		if (current_user_can('edit_published_products', $post_id)) {
 			if (isset($_POST['ml_official'])) {
 				$post = get_post($post_id);
-				ml_update_meta('ml_official_review', $post->post_parent, $post_id);
+				update_post_meta($post->post_parent, 'ml_official_review', $post_id);
 			}
 			else {
 				$post = get_post($post_id);

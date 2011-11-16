@@ -48,10 +48,6 @@ function ml_type_shelves() {
 	add_filter('single_template', 'ml_shelf_single_template');
 }
 
-function ml_shelf_page() {
-	include(dirname(__FILE__) . '/shelf-page.php');
-}
-
 /**
  * Callback from ml_type_shelves() to generate meta boxes on an edit page
  */
@@ -78,37 +74,7 @@ function ml_shelf_boxes() {
  * Meta Box for shelf display
  */
 function ml_shelf_mb_list($post) {
-	$meta = get_post_meta($post->ID, 'ml_usage');
-	$stati = ml_get_usage_stati();
-// 	echo '</div></div>'; // break out of regular post boxes
-	echo '<div class="products-liquid"><div id="products-shelves">';
-	foreach ($stati as $id => $labels) {
-		echo '<div class="products-holder-wrap">';
-		echo '<div class="shelf-name">';
-		echo '<div class="shelf-name-arrow"><br /></div>';
-		echo '<h3>' . $labels['label'] . '<span><img src="' . esc_url(admin_url('images/wpspin_dark.gif')) . '" class="ajax-feedback" title="" alt="" /></span></h3></div>';
-		echo '<div id="shelf-' . $post->ID . '-' . $id . '" class="products-droppable">';
-		if ($meta) {
-			$args = array('post_type' => 'ml_usage', 'post_status' => $id, 'include' => $meta);
-			$usages = get_posts($args);
-			if (!empty($usages)) {
-				foreach ($usages as $use) {
-					$product = get_post($use->post_parent);
-					ml_product_thumbnail($product, $use);
-				}
-			}
-		}
-		else {
-			echo '<p>' . __('There are no products listed on this shelf.', 'media-libraries') . '</p>';
-		}
-		echo '<br class="clear" />';
-		echo '</div>';
-		echo '</div>';
-		echo '<br class="clear" />';
-	}
-	echo '</div></div>';
-	echo '<br class="clear" />';
-// 	echo '<div><div>'; // remember to return to original box
+	ml_shelf_page($post->ID, true);
 }
 
 /**
@@ -172,49 +138,6 @@ function ml_shelf_right_now() {
 	echo '<td class="t tags">' . $text . '</td>';
 	echo '</tr>';
 }
-
-/**
- * Callback to get a page of products
- *
-function ml_shelf_get_page ($args) {
-	$post_id = (isset($args['post_id'])) ? $args['post_id'] : get_the_ID();
-	$page = (isset($args['page'])) ? intval($args['page']) : 1;
-	$perpage = (isset($args['perpage'])) ? intval($args['perpage']) : 10;
-	$product_ids = get_post_meta($post_id, 'ml_products', false);
-	$args = array('include' => $product_ids);
-	$prod_db = get_posts($args);
-	$products = $prod_db->posts;
-	$max_pages = $prod_db->max_num_pages;
-
-	$paginate = '<div class="aml-paginate">';
-	$paginate .= ($page < 1) ? '' : '<div class="aml-paginate-prev">' . __('Previous page', 'media-libraries') . '</div>';
-	$paginate .= ($page >= $max_pages) ? '' : '<div class="aml-paginate-next">' . __('Next page', 'media-libraries') . '</div>';
-	$paginate .= '</div>';
-
-	$html = '';
-	if (is_array($products)) {
-		foreach ($products as $prod) {
-			$html .= ml_product_thumbnail($prod, '<li class="ml_product">', '</li>');
-		}
-	}
-	return (empty($html)) ? __('No products found on the self.', 'media-libraries') : '<ul>' . $html . $paginate . '</ul>';
-}
-
-function &ml_get_products ($args=null) {
-	$defaults = array(
-		'numberposts' => 5, 'offset' => 0, 'orderby' => 'post_date',
-		'order' => 'DESC', 'post_type' => 'ml_product', 'suppress_filters' => true,
-		'post_status' => 'publish', 'ignore_sticky_posts' => true,
-	);
-
-	$r = wp_parse_args( $args, $defaults );
-	if ( ! empty($r['numberposts']) && empty($r['posts_per_page']) )
-		$r['posts_per_page'] = $r['numberposts'];
-
-	$get_posts = new WP_Query;
-	$get_posts->query($r);
-	return $get_posts;
-} */
 
 /**
  * Register the actions for our product post_type

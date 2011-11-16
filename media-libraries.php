@@ -14,17 +14,6 @@ Author: Christopher Roussel
 Author URI: http://impleri.net
 */
 
-/**
- * @todo
- * product: one-to-many review (one per user), one-to-many reading
- * reading: many-to-one product, many-to-one review, many-to-many shelf
- * review: many-to-one product (one per user), one-to-many reading
- * shelf: many-to-many reading
- *
- * productmeta: person(*)
- * readingmeta: shelf(1)
- */
-
 // Keep this file short and sweet; leave the clutter for elsewhere!
 define('ML_VERSION', '0.9.3');
 load_plugin_textdomain( 'media-libraries', false, basename(dirname(__FILE__)) . '/lang' );
@@ -72,7 +61,7 @@ function ml_init() {
 	}
 
 	require_once dirname(__FILE__) . '/functions.php'; // functions
-	require_once dirname(__FILE__) . '/roles.php'; // auths first!
+	require_once dirname(__FILE__) . '/roles.php'; // auths before post_types
 	require_once dirname(__FILE__) . '/product.php'; // adds products and people
 	require_once dirname(__FILE__) . '/review.php'; // adds reviews
 	require_once dirname(__FILE__) . '/usage.php'; // adds readings
@@ -80,19 +69,18 @@ function ml_init() {
  	require_once dirname(__FILE__) . '/user.php'; // users (front-end only)
 // 	include_once dirname(__FILE__) . '/widgets.php'; // the widgets
 
-	// finally amazon connector and ajax if in the admin side (not needed on frontend side)
+	// finally ajax if in the admin side (not needed on frontend side)
 	if (is_admin()) {
 		require_once dirname(__FILE__) . '/ajax.php';
 	}
 
-	// also add base css for styling
-// 	wp_enqueue_style('ml-style', plugins_url('/css/amazon.css', dirname(__FILE__) ));
+	wp_enqueue_style('ml-style', plugins_url('/css/media.fresh.css', __FILE__));
+	add_filter('page_template', 'ml_page_template');
 }
 
 // all of our hooks come last (i.e. here)
 register_activation_hook(basename(dirname(__FILE__)) . '/' . basename(__FILE__), 'ml_install');
 add_action('init', 'ml_init');
-add_action('admin_menu', 'ml_options_init', 9);
 
 // Pure PHP files should not have a closing PHP tag!!
 

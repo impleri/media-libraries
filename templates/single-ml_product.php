@@ -40,7 +40,7 @@ get_header(); ?>
 
 							<?php  if (has_reviews(0, 'review')) { ?>
 								<h3 id="reviews"><?php	printf(_n('One User Review of %2$s', '%1$s User Reviews of %2$s', get_reviews_number(0, 'review'), 'media-libraries'),
-									number_format_i18n(get_reviews_number(0, 'review')), '&#8220;' . get_the_title() . '&#8221;'); ?></h3>
+									number_format_i18n(get_reviews_number(0, 'review')), '<em>' . get_the_title() . '</em>'); ?></h3>
 								<div class="navigation">
 									<div class="alignleft"><?php previous_reviews_link() ?></div>
 									<div class="alignright"><?php next_reviews_link() ?></div>

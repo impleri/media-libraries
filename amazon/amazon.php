@@ -2,14 +2,15 @@
 /**
  * amazon data source for media libraries
  * @package media-libraries
+ * @subpackage amazon
  * @author Christopher Roussel <christopher@impleri.net>
  */
 
 /*
 Plugin Name: Media Libraries: Amazon Provider
-Version: 1.1
+Version: 1.3.2
 Plugin URI: http://impleri.net/development/media_libraries/
-Description: Default media provider.
+Description: Provides access to Amazon for adding products to Media Libraries.
 Author: Christopher Roussel
 Author URI: http://impleri.net
 */
@@ -21,17 +22,19 @@ Author URI: http://impleri.net
  * @static
  */
 class ml_amazon {
-
 	/**
 	 * @var Amazon domains that can be searched
 	 */
 	public static $domains = array(
-		'US' => 'United States',
-		'UK' => 'United Kingdom',
-		'DE' => 'Germany',
-		'JP' => 'Japan',
-		'FR' => 'France',
-		'CA' => 'Canada',
+		'com' => 'United States',
+		'co.uk' => 'United Kingdom',
+		'de' => 'Germany',
+		'co.jp' => 'Japan',
+		'fr' => 'France',
+		'ca' => 'Canada',
+		'it' => 'Italy',
+		'cn' => 'China',
+		'es' => 'Spain',
 	);
 
 	/**
@@ -63,11 +66,6 @@ class ml_amazon {
 		'lg' => 'Large',
 		'or' => 'Original',
 	);
-
-	/**
-	 * @var url to blank image if Amazon does not have one
-	 */
-	public static $blank_image = '';
 
 	/**
 	 * @var url prefix for Amazon images
@@ -114,28 +112,23 @@ class ml_amazon {
 	 * @param int page of results to return
 	 * @return string parsed html from ml_amazon::parse
 	 */
-	public static function search ($search, $type='b', $page=1) {
+	public static function search ($ret, $search, $type='b', $page=1) {
 		$amazon = self::get();
 		if (!$amazon) {
 			return __('Error loading Amazon ECS library', 'media-libraries');
 		}
 
-		$ret = '';
 		$type = (isset(self::$categories[$type])) ? self::$categories[$type] : 'Books';
 		try {
-			if ($page>1) {
-				$response = $amazon->category($type)->responseGroup('Small,Images')->optionalParameters(array('ItemPage' => $page))->search($search);
-			}
-			else {
-				$response = $amazon->category($type)->responseGroup('Small,Images')->search($search);
-			}
+// 			$opt = ($page>1) ? array('ItemPage' => $page) : null;
+			$response = $amazon->category($type)->responseGroup('Small,Images')->search($search);
 		}
 		catch(Exception $e) {
 			$ret .= sprintf(self::$error, $e->getMessage());
 		}
 
 		if (is_object($response)) {
-			if (intval($response->Items->TotalResults) > 0) {
+			if (isset($response->Items) && intval($response->Items->TotalResults) > 0) {
 				foreach ($response->Items->Item as $result) {
 					$ret .= self::parse($result);
 				}
@@ -215,9 +208,9 @@ class ml_amazon {
 		$ret .= '<div id="' . $item->ASIN . '" class="ml-item">' . __('Use this item', 'media-libraries') . '</div>';
 		$ret .= '</div>';
 
-		$image = (isset($item->MediumImage)) ? $item->MediumImage->URL : ((isset($item->SmallImage)) ? $item->SmallImage->URL : ((isset($item->LargeImage)) ? $item->LargeImage->URL : self::$blank_image));
+		$image = (isset($item->MediumImage)) ? $item->MediumImage->URL : ((isset($item->SmallImage)) ? $item->SmallImage->URL : ((isset($item->LargeImage)) ? $item->LargeImage->URL : ml_blank_image()));
 		if (!empty($image)) {
-			$ret .= '<div class="ml-item-image"><img src="' . $image . '" /></div>';
+			$ret .= '<div class="ml-item-image"><img src="' . $image . '" /><span class="ml-image" style="display:none;">' . self::strip_image($image) . '</div>';
 		}
 
 		return '<div id="ml-'.$item->ASIN.'" class="ml-list-item">' . $ret . '</div>' . "\n";
@@ -232,8 +225,13 @@ class ml_amazon {
 	 * @todo implement in ml_amazon::parse
 	 */
 	public function strip_image ($url) {
-		$arr = array_merge(array_values(self::$image_sizes), array(self::$image_base, '.jpg'));
-		return str_replace($arr, '', $url);
+		$image = '';
+		if ($url != ml_blank_image()) {
+			$arr = array_merge(array_values(self::$image_sizes), array(self::$image_base, '.jpg'));
+			$image = str_replace($arr, '', $url);
+		}
+
+		return $image;
 	}
 
 	/**
@@ -266,14 +264,58 @@ class ml_amazon {
 }
 
 /**
+ * Amazon options header display
+ */
+function ml_options_amazon() {
+	echo '<p>' . __('The following settings determine what Media Libraries will retrieve from Amazon.', 'media-libraries') . '</p>';
+}
+
+/**
+ * Amazon AWS key field
+ */
+function ml_amz_key_field() {
+	ml_text_field('ml_amz_key', sprintf(__('Required to add products from Amazon.  It is free to sign up. Register <a href="%s">here</a>.', 'media-libraries'), 'https://aws-portal.amazon.com/gp/aws/developer/registration/index.html') );
+}
+
+/**
+ * Amazon AWS secret field
+ */
+function ml_amz_secret_field() {
+	ml_text_field('ml_amz_secret', sprintf(__('Required to add products from Amazon.  Found at the same site as above. Register <a href="%s">here</a>.', 'media-libraries'), 'https://aws-portal.amazon.com/gp/aws/developer/registration/index.html') );
+}
+
+/**
+ * Amazon associate id field
+ */
+function ml_amz_assoc_field() {
+	ml_text_field('ml_amz_assoc', sprintf(__('Required to add products from Amazon. If your visitors purchase products, you will get commission on their purchases. Register <a href="%s">here</a>.', 'media-libraries'), 'http://associates.amazon.com/') );
+}
+
+/**
+ * Amazon domain field
+ */
+function ml_amz_domain_field() {
+	ml_select_field('ml_amz_domain', ml_amazon::$domains, __('Country-specific Amazon site to use for searching and product links', 'media-libraries'));
+	echo '<p>' . __('NB: If you have country-specific books in your catalogue and then change your domain setting, some old links might stop working.', 'media-libraries') . '</p>';
+}
+
+/**
+ * Amazon image size field
+ * @todo remove NB when image auto-size working
+ */
+function ml_amz_image_field() {
+	ml_select_field('ml_amz_image', ml_amazon::$img_size_text, __('NB: This change will only be applied to products you add from this point onwards.'));
+}
+
+/**
  * default amazon options
  */
 function ml_amazon_defaults ($options) {
-	$options['ml_amazon_id'] = '';
-	$options['ml_secret_key'] = '';
-	$options['ml_associate'] = '';
-	$options['ml_domain'] = 'us';
-	$options['ml_image_size'] = 'med';
+	$options['ml_amz_key'] = '';
+	$options['ml_amz_secret'] = '';
+	$options['ml_amz_assoc'] = '';
+	$options['ml_amz_domain'] = 'com';
+	$options['ml_amz_image'] = 'med';
 
 	return $options;
 }
@@ -288,102 +330,23 @@ function ml_amazon_validate ($valid, $ml_post) {
 	$options = get_option('ml_options');
 
 	// Amazon fields
-	$valid['ml_amazon_id'] = ($ml_post['ml_amazon_id']) ? sanitize_text_field($ml_post['ml_amazon_id']) : null;
-	$valid['ml_secret_key'] = ($ml_post['ml_secret_key']) ? sanitize_text_field($ml_post['ml_secret_key']) : null;
-	$valid['ml_associate'] = ($ml_post['ml_associate']) ? sanitize_text_field($ml_post['ml_associate']) : null;
-	$valid['ml_domain'] = ($ml_post['ml_domain']) ? sanitize_text_field($ml_post['ml_domain']) : null;
-	$valid['ml_image_size'] = in_array($ml_post['ml_image_size'], array('sm', 'med', 'lg')) ? $ml_post['ml_image_size'] : null;
+	$valid['ml_amz_key'] = ($ml_post['ml_amz_key']) ? sanitize_text_field($ml_post['ml_amz_key']) : null;
+	$valid['ml_amz_secret'] = ($ml_post['ml_amz_secret']) ? sanitize_text_field($ml_post['ml_amz_secret']) : null;
+	$valid['ml_amz_assoc'] = ($ml_post['ml_amz_assoc']) ? sanitize_text_field($ml_post['ml_amz_assoc']) : null;
+	$valid['ml_amz_domain'] = ($ml_post['ml_amz_domain']) ? sanitize_text_field($ml_post['ml_amz_domain']) : null;
+	$valid['ml_amz_image'] = in_array($ml_post['ml_amz_image'], array('sm', 'med', 'lg')) ? $ml_post['ml_amz_image'] : null;
 
 	// Throw an error if no AWS info
-	if (empty($valid['ml_amazon_id'])) {
-		add_settings_error('ml_options', 'media-libraries', __('Amazon ID option is required for Media Libraries to function properly!', 'media-libraries'));
+	if (empty($valid['ml_amz_key'])) {
+		add_settings_error('ml_options', 'media-libraries', __('Amazon WDSL requires an <b>Amazon AWS key</b>!', 'media-libraries'));
 	}
-	if (empty($valid['ml_secret_key'])) {
-		add_settings_error('ml_options', 'media-libraries', __('Amazon secret key is required for Media Libraries to function properly!', 'media-libraries'));
+	if (empty($valid['ml_amz_secret'])) {
+		add_settings_error('ml_options', 'media-libraries', __('Amazon WDSL requires the <b>Amazon AWS secret</b> attached to an AWS key!', 'media-libraries'));
+	}
+	if (empty($valid['ml_amz_assoc'])) {
+		add_settings_error('ml_options', 'media-libraries', __('Amazon WDSL requires an <b>Amazon Associates ID</b>!', 'media-libraries'));
 	}
 	return $valid;
-}
-
-/**
- * Amazon options header display
- */
-function ml_options_amazon() {
-?>
-<p><?php _e('The following settings determine what Media Libraries will retrieve from Amazon.', 'media-libraries'); ?></p>
-<?php }
-
-/**
- * Amazon AWS id field
- */
-function ml_amazon_id_field() {
-?>
-<input type="text" size="50" id="ml_amazon_id" name="ml_options[ml_amazon_id]" value="<?php echo htmlentities(ml_get_option('ml_amazon_id'), ENT_QUOTES, "UTF-8"); ?>" />
-<p><?php echo sprintf(__('Required to add products from Amazon.  It is free to sign up. Register <a href="%s">here</a>.', 'media-libraries'), 'https://aws-portal.amazon.com/gp/aws/developer/registration/index.html'); ?></p>
-<?php }
-
-/**
- * Amazon AWS secret field
- */
-function ml_secret_key_field() {
-?>
-<input type="text" size="50" id="ml_secret_key" name="ml_options[ml_secret_key]" value="<?php echo htmlentities(ml_get_option('ml_secret_key'), ENT_QUOTES, "UTF-8"); ?>" />
-<p><?php echo sprintf(__('Required to add products from Amazon.  Found at the same site as above. Register <a href="%s">here</a>.', 'media-libraries'), 'https://aws-portal.amazon.com/gp/aws/developer/registration/index.html'); ?></p>
-<?php }
-
-/**
- * Amazon associate id field
- */
-function ml_associate_field() {
-?>
-<input type="text" size="50" id="ml_associate" name="ml_options[ml_associate]" value="<?php echo htmlentities(ml_get_option('ml_associate'), ENT_QUOTES, "UTF-8"); ?>" />
-<p><?php _e('If you choose to link to a product page on Amazon using the url meta - as the default template does - then you can earn commission if your visitors then purchase products.'); ?></p>
-<p><?php echo sprintf(__('If you do not have an Amazon Associates ID, you can either <a href="%s">get one</a>.', 'media-libraries'), 'http://associates.amazon.com/'); ?></p>
-<?php }
-
-/**
- * Amazon domain field
- */
-function ml_domain_field() {
-	$option = ml_get_option('ml_domain');
-	$ml_domains = ml_amazon::$domains;
-?>
-<select id="ml_domain" name="ml_options[ml_domain]">
-<?php foreach ($ml_domains as $domain => $country) { ?>
-<option value="<?php echo $domain; ?>"<?php selected($domain, $option); ?>><?php echo $country; ?></option>
-<?php } ?>
-</select>
-<p><?php _e('Country-specific Amazon site to use for searching and product links', 'media-libraries'); ?></p>
-<p><?php _e('NB: If you have country-specific books in your catalogue and then change your domain setting, some old links might stop working.', 'media-libraries'); ?></p>
-<?php }
-
-/**
- * Amazon image size field
- * @todo remove NB when image auto-size working
- */
-function ml_image_size_field() {
-	$option = ml_get_option('ml_image_size');
-	$sizes = ml_amazon::$img_size_text;
-?>
-<select id="ml_image_size" name="ml_options[ml_image_size]">
-<?php foreach ($sizes as $size => $name) { ?>
-<option value="<?php echo $size; ?>"<?php selected($size, $option); ?>><?php _e($name); ?></option>
-<?php } ?>
-</select>
-<p><?php _e('NB: This change will only be applied to products you add from this point onwards.'); ?></p>
-<?php }
-
-/**
- * register amazon options with WP settings api
- */
-function ml_amazon_init_options() {
-	add_settings_section('ml_options_amazon', __('Amazon Settings', 'media-libraries'), 'ml_options_amazon', 'ml_options');
-
-	// Amazon field definitions
-	add_settings_field('ml_amazon_id', __('Amazon Web Services Access Key ID', 'media-libraries'), 'ml_amazon_id_field', 'ml_options', 'ml_options_amazon');
-	add_settings_field('ml_secret_key', __('Amazon Web Services Secret Access Key', 'media-libraries'), 'ml_secret_key_field', 'ml_options', 'ml_options_amazon');
-	add_settings_field('ml_associate', __('Your Amazon Associates ID', 'media-libraries'), 'ml_associate_field', 'ml_options', 'ml_options_amazon');
-	add_settings_field('ml_domain', __('Amazon domain to use', 'media-libraries'), 'ml_domain_field', 'ml_options', 'ml_options_amazon');
-	add_settings_field('ml_image_size', __('Image size to use', 'media-libraries'), 'ml_image_size_field', 'ml_options', 'ml_options_display');
 }
 
 /**
@@ -393,15 +356,35 @@ function ml_amazon_init_options() {
  */
 function ml_amazon_check ($pass) {
 	if ($pass == true) {
-		$aws_key = ml_get_option('ml_amazon_id');
-		$aws_secret = ml_get_option('ml_secret_key');
+		$aws_key = ml_get_option('ml_amz_key');
+		$aws_secret = ml_get_option('ml_amz_secret');
+		$aws_associate = ml_get_option('ml_amz_assoc');
 
-		$pass = (!empty($aws_key) && !empty($aws_secret));
+		$pass = (!(empty($aws_key) || empty($aws_secret) || empty($aws_associate)));
 	}
 	return $pass;
 }
 
+/**
+ * register amazon options with WP settings api
+ */
+function ml_amazon_init_options() {
+	add_settings_section('ml_options_amazon', __('Amazon Settings', 'media-libraries'), 'ml_options_amazon', 'ml_options');
+
+	// Amazon field definitions
+	add_settings_field('ml_amz_key', __('Amazon Web Services Access Key ID', 'media-libraries'), 'ml_amz_key_field', 'ml_options', 'ml_options_amazon');
+	add_settings_field('ml_amz_secret', __('Amazon Web Services Secret Access Key', 'media-libraries'), 'ml_amz_secret_field', 'ml_options', 'ml_options_amazon');
+	add_settings_field('ml_amz_assoc', __('Your Amazon Associates ID', 'media-libraries'), 'ml_amz_assoc_field', 'ml_options', 'ml_options_amazon');
+	add_settings_field('ml_amz_domain', __('Amazon domain to use', 'media-libraries'), 'ml_amz_domain_field', 'ml_options', 'ml_options_amazon');
+	add_settings_field('ml_amz_image', __('Image size to use', 'media-libraries'), 'ml_amz_image_field', 'ml_options', 'ml_options_display');
+}
+
+function ml_amazon_init() {
+	add_filter('ml-check-init', 'ml_amazon_check');
+	add_filter('ml-default-options', 'ml_amazon_defaults');
+	add_filter('ml-options-validate', 'ml_amazon_validate', 10, 2);
+	add_filter('ml-do-search', array('ml_amazon', 'search)', 10, 3));
+}
+
 add_action('ml-options-init', 'ml_amazon_init_options');
-add_filter('ml-check-init', 'ml_amazon_check');
-add_filter('ml-default-options', 'ml_amazon_defaults');
-add_filter('ml-options-validate', 'ml_amazon_validate', 10, 2);
+add_action('init', 'ml_amazon_init');

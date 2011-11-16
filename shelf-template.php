@@ -26,24 +26,51 @@ function ml_shelf_single_template ($template) {
 
 /**
  * Display a thumbnail page of products
- *
-function ml_shelf_page ($products, $format='t', $page=1, $max_pages=1) {
-	$function = ($format == 'l') ? 'product_shelf_row' : 'product_shelf_image';
-	$paginate = '<div class="aml-paginate">';
-	$paginate .= ($page < 1) ? '' : '<div class="aml-paginate-prev">' . __('Previous page', 'media-libraries') . '</div>';
-	$paginate .= ($page >= $max_pages) ? '' : '<div class="aml-paginate-next">' . __('Next page', 'media-libraries') . '</div>';
-	$paginate .= '</div>';
+ */
+function ml_shelf_page ($shelf, $edit=false, $echo=true) {
+	$meta = get_post_meta($shelf, 'ml_usage');
+	$stati = ml_get_usage_stati();
 
-	$html = '';
-	if (is_array($products)) {
-		foreach ($products as $prod) {
-			$html .= $function($prod, '<li class="ml_product">', '</li>');
+	$return = (($edit) ? '<div class="products-liquid">' : '') . '<div id="products-shelves">';
+	foreach ($stati as $id => $labels) {
+		$return .= '<div class="products-holder-wrap">';
+		$return .= '<div class="shelf-name">';
+		if ($edit) {
+			$return .= '<div class="shelf-name-arrow"><br /></div>';
 		}
+		$return .= '<h3>' . $labels['label'];
+		$return .= ($edit) ? '<span><img src="' . esc_url(admin_url('images/wpspin_dark.gif')) . '" class="ajax-feedback" title="" alt="" /></span>' : '';
+		$return .= '</h3></div>';
+		$return .= '<div id="shelf-' . $shelf . '-' . $id . '" class="products-droppable">';
+		if ($meta) {
+			$args = array('post_type' => 'ml_usage', 'post_status' => $id, 'include' => $meta);
+			$usages = get_posts($args);
+			if (!empty($usages)) {
+				foreach ($usages as $use) {
+					$product = get_post($use->post_parent);
+					$return .= ml_product_thumbnail($product, $use, $edit, false);
+				}
+			}
+		}
+		elseif (!$edit) {
+			$return .= '<p>' . __('There are no products listed on this shelf.', 'media-libraries') . '</p>';
+		}
+		$return .= '<br class="clear" />';
+		$return .= '</div>';
+		$return .= '</div>';
+		$return .= '<br class="clear" />';
 	}
-	return (empty($html)) ? __('No products found on the self.', 'media-libraries') : '<ul>' . $html . $paginate . '</ul>';
-}*/
+	$return .= '</div></div>';
+	$return .= '<br class="clear" />';
 
-function ml_product_thumbnail ($prod, $use=false) {
+	if (!$echo) {
+		return $return;
+	}
+
+	echo $return;
+}
+
+function ml_product_thumbnail ($prod, $use=false, $edit=false, $echo=true) {
 	static $i = 0;
 
 	$i++;
@@ -58,88 +85,126 @@ function ml_product_thumbnail ($prod, $use=false) {
 	$id_string = 'product-'.esc_attr($prod->ID).'-'.esc_attr($use_id);
 	$id_arr_string = 'product-'.esc_attr($prod->ID).'['.esc_attr($use_id).']';
 	$status = (!$use) ? false : $use->post_status;
-?>
-<div id="<?php echo $id_string; ?>" class="product">
-	<div class="product-top">
-		<div class="product-title-action">
-			<a class="product-action hide-if-no-js" href="#available-products"></a>
-			<a class="product-control-edit hide-if-js" href="<?php echo esc_url(add_query_arg($query_arg)); ?>"><span class="edit"><?php _e('Edit'); ?></span><span class="add"><?php _e('Add'); ?></span></a>
-		</div>
-		<div class="product-title"><h4><?php echo $prod->post_title; ?></h4></div>
-	</div>
 
-	<div class="product-inside">
-		<form action="" method="post">
-		<div class="product-content">
-			<label for="<?php echo $id_string; ?>-status"><?php _e('Status:'); ?></label>
-			<select name="<?php echo $id_arr_string; ?>[status]" id="<?php echo $id_string; ?>-status" tabindex="4">
-			<?php foreach ($stati as $name => $args) { ?>
-				<option<?php selected($status, $name ); ?> value="<?php echo $name; ?>"><?  _e($args['label'], 'media-libraries'); ?></option>
-			<? } ?>
-			</select>
-			<?php ml_time_box($use, $id_string, $id_arr_string); ?>
-			<input type="hidden" name="product-id" class="product-id" value="product-<?php echo esc_attr($prod->ID); ?>-<?php echo esc_attr($use_id); ?>" />
-			<div class="product-control-actions">
-				<div class="alignleft">
-					<a class="product-control-remove" href="#remove"><?php _e('Delete'); ?></a> |
-					<a class="product-control-close" href="#close"><?php _e('Close'); ?></a>
-				</div>
-				<div class="alignright">
-					<img src="<?php echo esc_url(admin_url('images/wpspin_light.gif')); ?>" class="ajax-feedback" title="" alt="" />
-					<?php submit_button(__( 'Save' ), 'button-primary product-control-save', 'saveproduct', false, array('id' => 'product-' . esc_attr($prod->ID) . '-saveproduct')); ?>
-				</div>
-				<br class="clear" />
-			</div>
-		</div>
-		</form>
-	</div>
+	$return = '<div id="' . $id_string . '" class="product">';
 
-	<div class="product-description">
-		<img src="<?php echo esc_url($image); ?>" /><br />
-		<?php echo $people . $add_html; ?>
-	</div>
-</div>
-	<?php
+	$return .=  '<div class="product-top">';
+	if ($edit) {
+		$return .= '<div class="product-title-action">';
+		$return .= '<a class="product-action hide-if-no-js" href="#available-products"></a>';
+		$return .= '<a class="product-control-edit hide-if-js" href="' . esc_url(add_query_arg($query_arg)) . '"><span class="edit">' . __('Edit') . '</span><span class="add">' . __('Add') . '</span></a>';
+		$return .= '</div>';
+	}
+	$return .= '<div class="product-title"><h4>' . $prod->post_title . '</h4></div>';
+	$return .= '</div>';
+
+	$return .= '<div class="product-inside">';
+	$return .= '<div class="product-content">';
+	if ($edit) {
+		$return .= '<form action="" method="post">';
+		$return .= '<label for="' . $id_string . '-status">' . __('Status:') . '</label>';
+		$return .= '<select name="' . $id_arr_string . '[status]" id="' . $id_string . '-status" tabindex="4">';
+		foreach ($stati as $name => $args) {
+			$return .= '<option' . selected($status, $name) . ' value="' . $name . '">' . __($args['label'], 'media-libraries') . '</option>';
+		}
+		$return .= '</select>';
+		$return .= ml_time_box($use, $id_string, $id_arr_string, true, false);
+		$return .= '<input type="hidden" name="product-id" class="product-id" value="product-' . esc_attr($prod->ID) . '-' . esc_attr($use_id) . '" />';
+		$return .= '<div class="product-control-actions">';
+		$return .= '<div class="alignleft">';
+		$return .= '<a class="product-control-remove" href="#remove">' . __('Delete') . '</a> |';
+		$return .= '<a class="product-control-close" href="#close">' . __('Close') . '</a>';
+		$return .= '</div>';
+		$return .= '<div class="alignright">';
+		$return .= '<img src="' . esc_url(admin_url('images/wpspin_light.gif')) . '" class="ajax-feedback" title="" alt="" />';
+		$return .= submit_button(__( 'Save' ), 'button-primary product-control-save', 'saveproduct', false, array('id' => 'product-' . esc_attr($prod->ID) . '-saveproduct'));
+		$return .= '</div>';
+		$return .= '<br class="clear" />';
+		$return .= '</div>';
+		$return .= '</form>';
+	}
+	else {
+		ml_time_box($use, $id_string, $id_arr_string, false, false);
+	}
+	$return .= '</div>';
+	$return .= '</div>';
+
+	$return .= '<div class="product-description">';
+	$return .= '<img src="' . esc_url($image) . '" /><br />';
+	$return .= $people . $add_html;
+	$return .= '</div>';
+
+	$return .= '</div>';
+
+	if (!$echo) {
+		return $return;
+	}
+
+	echo $return;
 }
 
-function ml_time_box ($usage, $id_string, $id_array) {
+// testing
+
+function ml_time_box ($usage, $id_string, $id_array, $edit=false, $echo=true) {
 	$added = (!$usage) ? 0 : get_post_meta($usage->ID, 'ml_added', true);
 	$start = (!$usage) ? 0 : get_post_meta($usage->ID, 'ml_started', true);
 	$ended = (!$usage) ? 0 : get_post_meta($usage->ID, 'ml_finished', true);
 
-	ml_show_date($added, 'added', $id_string, $id_array);
-	ml_show_date($start, 'started', $id_string, $id_array);
-	ml_show_date($ended, 'finished', $id_string, $id_array);
+	$function = ($edit) ? 'ml_show_date' : 'ml_show_times';
+
+	$return = $function($added, 'added', $id_string, $id_array, $echo);
+	$return .= $function($start, 'started', $id_string, $id_array, $echo);
+	$return .= $function($ended, 'finished', $id_string, $id_array, $echo);
+
+	if (!$echo) {
+		return $return;
+	}
+
+	echo $return;
 }
 
-function ml_show_date ($time=0, $which='added', $id_string='', $id_array='') {
+function ml_show_date ($time=0, $which='added', $id_string='', $id_array='', $echo=true) {
 	global $post, $action;
 
 	$time = ($time == 0) ? current_time('mysql') : $time;
 	$datef = __('M j, Y @ G:i');
 	$stamp = __('<b>%1$s</b>');
 	$date = date_i18n($datef, strtotime($time));
-	switch ($which) {
-		case 'added':
-			$string = 'Added to Shelf';
-			break;
-		case 'started':
-			$string = 'Began Usage';
-			break;
-		case 'finished':
-			$string = 'Usage Finished';
-			break;
-		default:
-			$string = '';
-			break;
+	$stati = ml_get_usage_stati();
+	$string = (isset($stati[$which]['single'])) ? $stati[$which]['single'] : '';
+
+	$return = '<div id="' . $id_string . '-' . $which . '" class="curtime">';
+	$return .= __($string, 'media-libraries') . ': <span id="' . $id_string . '-timestamp-' . $which . '">' . sprintf($stamp, $date) . '?></span>';
+	$return .= '<a href="#edit_timestamp-' . $which . '" class="edit-timestamp hide-if-no-js" tabindex="5">' . __('Edit') . '</a>';
+	$return .= '<div id="' . $id_string . '-timestampdiv-' . $which . '" class="hide-if-js">' . ml_touch_time($time, $which, $id_string, $id_array, $echo) . '</div>';
+	$return .= '</div>';
+
+	if (!$echo) {
+		return $return;
 	}
-?>
-<div id="<?php echo $id_string; ?>-<?php echo $which; ?>" class="curtime">
-	<?php echo $string; ?>: <span id="<?php echo $id_string; ?>-timestamp-<?php echo $which; ?>"><?php printf($stamp, $date); ?></span>
-	<a href="#edit_timestamp-<?php echo $which; ?>" class="edit-timestamp hide-if-no-js" tabindex='5'><?php _e('Edit') ?></a>
-	<div id="<?php echo $id_string; ?>-timestampdiv-<?php echo $which; ?>" class="hide-if-js"><?php ml_touch_time($time, $which, $id_string, $id_array); ?></div>
-</div>
-<?php
+
+	echo $return;
+}
+
+function ml_show_times ($time=0, $which='added', $id_string='', $id_array='', $echo=true) {
+	global $post, $action;
+
+	$time = ($time == 0) ? current_time('mysql') : $time;
+	$datef = __('M j, Y @ G:i');
+	$stamp = __('<b>%1$s</b>');
+	$date = date_i18n($datef, strtotime($time));
+	$stati = ml_get_usage_stati();
+	$string = (isset($stati[$which]['single'])) ? $stati[$which]['single'] : '';
+
+	$return = '<div id="' . $id_string . '-' . $which . '" class="curtime">';
+	$return .= $string . ': <span id="' . $id_string . '-timestamp-' . $which . '">' . sprintf($stamp, $date) . '</span>';
+	$return .= '</div>';
+
+	if (!$echo) {
+		return $return;
+	}
+
+	echo $return;
 }
 
 /**

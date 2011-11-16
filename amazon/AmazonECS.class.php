@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Amazon ECS Class
  * http://www.amazon.com
@@ -10,12 +10,13 @@
  *
  * Requirement is the PHP extension SOAP.
  *
- * @package AmazonECS
- * @license http://www.gnu.org/licenses/gpl.txt GPL
- * @version 1.1
- * @author  Exeu <exeu65@googlemail.com>
- * @link http://github.com/Exeu/Amazon-ECS-PHP-Library/wiki Wiki
- * @link http://github.com/Exeu/Amazon-ECS-PHP-Library Source
+ * @package      AmazonECS
+ * @license      http://www.gnu.org/licenses/gpl.txt GPL
+ * @version      1.3.2
+ * @author       Exeu <exeu65@googlemail.com>
+ * @contributor  Julien Chaumond <chaumond@gmail.com>
+ * @link         http://github.com/Exeu/Amazon-ECS-PHP-Library/wiki Wiki
+ * @link         http://github.com/Exeu/Amazon-ECS-PHP-Library Source
  */
 class AmazonECS
 {
@@ -41,11 +42,25 @@ class AmazonECS
   );
 
   /**
-   * The Webservice URI: Setted to version 2010-09-01
+   * All possible locations
+   *
+   * @var array
+   */
+  private $possibleLocations = array('de', 'com', 'co.uk', 'ca', 'fr', 'co.jp', 'it', 'cn', 'es');
+
+  /**
+   * The WSDL File
    *
    * @var string
    */
-  protected $webserviceUri = 'http://ecs.amazonaws.com/AWSECommerceService/2010-09-01/%%COUNTRY%%/AWSECommerceService.wsdl';
+  protected $webserviceWsdl = 'http://webservices.amazon.com/AWSECommerceService/AWSECommerceService.wsdl';
+
+  /**
+   * The SOAP Endpoint
+   *
+   * @var string
+   */
+  protected $webserviceEndpoint = 'https://webservices.amazon.%%COUNTRY%%/onca/soap?Service=AWSECommerceService';
 
   /**
    * @param string $accessKey
@@ -53,7 +68,7 @@ class AmazonECS
    * @param string $country
    * @param string $associateTag
    */
-  public function __construct($accessKey, $secretKey, $country = 'US', $associateTag = '')
+  public function __construct($accessKey, $secretKey, $country, $associateTag)
   {
     if (empty($accessKey) || empty($secretKey))
     {
@@ -63,7 +78,7 @@ class AmazonECS
     $this->requestConfig['accessKey']     = $accessKey;
     $this->requestConfig['secretKey']     = $secretKey;
     $this->requestConfig['associateTag']  = $associateTag;
-    $this->responseConfig['country']      = $country;
+    $this->country($country);
   }
 
   /**
@@ -101,7 +116,6 @@ class AmazonECS
     );
   }
 
-
   public function lookup($asin)
   {
     $params = $this->buildRequestParams('ItemLookup', array(
@@ -129,6 +143,23 @@ class AmazonECS
 
     return $this->returnData(
       $this->performSoapRequest("BrowseNodeLookup", $params)
+    );
+  }
+
+  /**
+   * Implementation of SimilarityLookup
+   * This allows to fetch information about product related to the parameter product
+   *
+   * @param string $asin
+   */
+  public function similarityLookup($asin)
+  {
+    $params = $this->buildRequestParams('SimilarityLookup', array(
+      'ItemId' => $asin
+    ));
+
+    return $this->returnData(
+      $this->performSoapRequest("SimilarityLookup", $params)
     );
   }
 
@@ -183,9 +214,15 @@ class AmazonECS
   protected function performSoapRequest($function, $params)
   {
     $soapClient = new SoapClient(
-      str_replace('%%COUNTRY%%', strtoupper($this->responseConfig['country']), $this->webserviceUri),
+      $this->webserviceWsdl,
       array('exceptions' => 1)
     );
+
+    $soapClient->__setLocation(str_replace(
+      '%%COUNTRY%%',
+      $this->responseConfig['country'],
+      $this->webserviceEndpoint
+    ));
 
     $soapClient->__setSoapHeaders($this->buildSoapHeader($function));
 
@@ -366,7 +403,16 @@ class AmazonECS
       return $this->responseConfig['country'];
     }
 
-    $this->responseConfig['country'] = $country;
+    if (false === in_array(strtolower($country), $this->possibleLocations))
+    {
+      throw new InvalidArgumentException(sprintf(
+        "Invalid Country-Code: %s! Possible Country-Codes: %s",
+        $country,
+        implode(', ', $this->possibleLocations)
+      ));
+    }
+
+    $this->responseConfig['country'] = strtolower($country);
 
     return $this;
   }
@@ -433,5 +479,31 @@ class AmazonECS
   public function setReturnType($type)
   {
     return $this->returnType($type);
+  }
+
+  /**
+   * Setting the resultpage to a specified value.
+   * Allows to browse resultsets which have more than one page.
+   *
+   * @param integer $page
+   *
+   * @return AmazonECS
+   */
+  public function page($page)
+  {
+    if (false === is_numeric($page) || $page <= 0)
+    {
+      throw new InvalidArgumentException(sprintf(
+        '%s is an invalid page value. It has to be numeric and positive',
+        $page
+      ));
+    }
+
+    $this->responseConfig['optionalParameters'] = array_merge(
+      $this->responseConfig['optionalParameters'],
+      array("ItemPage" => $page)
+    );
+
+    return $this;
   }
 }

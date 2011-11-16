@@ -3,7 +3,6 @@ Contributors: impleri
 Tags: books, videos, music, games, film, movies, reviews, media, widget, amazon, library
 Requires at least: 3.0
 Tested up to: 3.2
-Stable tag: 0.9.5
 
 Allows you to organise books, videos, music, and games found on external websites into shelves and create user reviews for them.
 
@@ -54,6 +53,7 @@ The main difference is that a review only occurs one per product per user. A sin
 * Separated usage (readings/etc) and reviews
 * Initial template files and functions
 * Better handling of usage times
+* Upgraded to Exeu's Amazon WDSL library 1.3.2 (Note: per Amazon, an associate id is necessary for the new WDSL, old ones will be discontinued 2012-02-21)
 
 = 0.9.2 =
 * First beta release

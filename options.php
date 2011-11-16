@@ -7,6 +7,8 @@
 
 /**
  * default options
+ *
+ * @todo verify options, add page mapping
  */
 function ml_default_options() {
 	return apply_filters('ml-default-options', array(
@@ -20,43 +22,9 @@ function ml_default_options() {
 		'ml_slug_tag' => 'tag',
 		'ml_slug_review' => 'review',
 		'ml_slug_shelf' => 'shelf',
+		'ml_slug_user' => 'user',
 		'ml_version' => ML_VERSION,
 	));
-}
-
-function ml_product_categories() {
-	return array(
-		'b' => __('Books', 'media-libraries'),
-		'v' => __('Video', 'media-libraries'),
-		'm' => __('Music', 'media-libraries'),
-		'g' => __('Video Games', 'media-libraries'),
-	);
-}
-
-/**
- * shortcut for handling meta updates
- *
- * @param string name of meta field
- * @param int post id for meta
- * @param mixed new value (default is null)
- * @return bool true on success
- */
-function ml_update_meta ($field, $post, $new=null, $single=true) {
-	$old = get_post_meta($post, $field, $single);
-	if(empty($new)) {
-		$ret = delete_post_meta($post, $field, $old);
-	}
-	elseif (empty($old)) {
-		$ret = add_post_meta($post, $field, $new, $single);
-	}
-	elseif ($new != $old) {
-		$ret = update_post_meta($post, $field, $new, $old);
-	}
-	else {
-		$ret = false;
-	}
-
-	return $ret;
 }
 
 /**
@@ -88,55 +56,47 @@ function ml_get_option ($key='', $def=null) {
 }
 
 /**
- * hack to use our templates
+ * shortcut for setting option
  *
- * @param string found template (passed from the filter)
- * @param string type of custom post/taxonomy to check
- * @param string type of page (archive, single, or taxonomy)
- * @return string path to template
+ * @param string name of option
+ * @param mixed option value (if null, will use default)
+ * @return boolean true on success
  */
-function ml_insert_template ($template, $type, $page='archive') {
-	if ($page == 'taxonomy') {
-		$term = get_queried_object();
-		$check = $term->taxonomy;
-	}
-	else {
-		$check = get_query_var('post_type');
+function ml_set_option($key='', $val=null) {
+	static $options;
+	static $defaults;
+
+	if (!is_array($defaults)) {
+		$defaults = ml_default_options();
 	}
 
-	// one of ours to worry about!
-	if ($check == $type) {
-		$file = $page.'-'.$type.'.php';
+	if (!is_array($options)) {
+		$options = get_option('ml_options', $defaults);
+	}
 
-		// template not found in theme folder, so replace it with our default
-		if ($file != basename($template)) {
-			$path = dirname(__FILE__) . '/templates/' . $file;
-			if ( file_exists($path)) {
-				$template = $path;
-			}
+	if (!empty($key)) {
+		if (false === strpos($key, 'ml_')) {
+			$key = 'ml_' . $key;
 		}
+		$val = (is_null($val) && isset($defaults[$key])) ? $defaults[$key] : $val;
+
+		$options[$key] = $val;
 	}
 
-	return $template;
+	$options = array_merge($defaults, $options);
+	update_option('ml_options', $options);
 }
 
 /**
  * options page display
  */
 function ml_options_page() {
-?>
-	<div class="wrap">
-	<form method="post" action="options.php">
-		<h2>Media Libraries</h2>
-		 <?php settings_fields('media_libraries'); ?>
-		<?php do_settings_sections('ml_options'); ?>
-
-		<p class="submit">
-			<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
-		</p>
-	</form>
-	</div>
-<?php
+	echo '<div class="wrap"><form method="post" action="options.php">';
+	echo '<h2>' . __('Media Libraries', 'media-libraries') . '</h2>';
+	settings_fields('media_libraries');
+	do_settings_sections('ml_options');
+	echo '<p class="submit"><input type="submit" class="button-primary" value="' . __('Save Changes') . '" /></p>';
+	echo '</form></div>';
 }
 
 /**
@@ -166,20 +126,20 @@ function ml_options_validate ($ml_post) {
 }
 
 /**
- * display options header display
+ * template for a text field display
+ *
+ * @param string key
+ * @param string value
+ * @param string description
+ * @param int size of input field (default is 50)
  */
-function ml_options_display() {
-?>
-<p><?php _e('These settings determine how libraries will be displayed.', 'media-libraries'); ?></p>
-<?php }
-
-/**
- * products per page field display
- */
-function ml_per_page_field() {
-?>
-<input type="text" size="2" id="ml_per_page" name="ml_options[ml_per_page]" value="<?php echo intval(ml_get_option('ml_per_page')); ?>" />
-<?php }
+function ml_text_field ($key, $text='', $size=50) {
+	$value = ml_get_option($key);
+	echo '<input type="text" size="' . $size . '" id="' . $key . '" name="ml_options[' . $key. ']" value="' . $value . '" />';
+	if (!empty($text)) {
+		echo '<p>' . $text . '</p>';
+	}
+}
 
 /**
  * template for slug field display
@@ -188,11 +148,43 @@ function ml_per_page_field() {
  * @param string description
  */
 function ml_slug_field ($option, $text) {
-?>
-<input type="text" size="50" id="<?php echo $option; ?>" name="ml_options[<?php echo $option; ?>]" value="<?php echo ml_get_option($option); ?>" />
-<p><?php _e($text, 'media-libraries'); ?></p>
-<p><?php _e('NB: Only Alpha-numerics and dashes are allowed.', 'media-libraries'); ?></p>
-<?php }
+	ml_text_field($option, __($text, 'media-libraries'));
+	echo '<p>' . __('NB: Only Alpha-numerics and dashes are allowed.', 'media-libraries') . '</p>';
+}
+
+/**
+ * template for a select field display
+ *
+ * @param string key
+ * @param string description
+ * @param int size of input field (default is 50)
+ */
+function ml_select_field ($key, $options, $text='') {
+	$value = ml_get_option($key);
+	echo '<select id="' . $key . '" name="ml_options[' . $key . ']">';
+	foreach ($options as $val => $name) {
+		echo '<option value="' . $val . '"' . selected($value, $val, false) . '>' . __($name, 'media-libraries') . '</option>';
+	}
+	echo '</select>';
+
+	if (!empty($text)) {
+		echo '<p>' . $text . '</p>';
+	}
+}
+
+/**
+ * display options header display
+ */
+function ml_options_display() {
+	echo '<p>' . __('These settings determine how libraries will be displayed.', 'media-libraries') . '</p>';
+}
+
+/**
+ * products per page field display
+ */
+function ml_per_page_field() {
+	ml_text_field('ml_per_page', '', 2);
+}
 
 /**
  * base slug field
@@ -241,20 +233,15 @@ function ml_slug_shelf_field() {
  * @todo check once more
  */
 function ml_options_init() {
-	add_menu_page( __('Media Libraries', 'media-libraries'), __('Libraries', 'media-libraries'), 'edit_posts', 'edit.php?post_type=ml_product', '', '', 15);
-	$default_options = ml_default_options();
-	$options = get_option('ml_options', ml_default_options());
-	$options = (false === $options) ? array() : $options;
-	$options = array_merge($default_options, $options);
-	update_option('ml_options', $options);
+	ml_set_option();
+
+	add_menu_page(__('Media Libraries', 'media-libraries'), __('Libraries', 'media-libraries'), 'edit_posts', 'edit.php?post_type=ml_product', '', '', 15);
 
 	register_setting('media_libraries', 'ml_options', 'ml_options_validate');
-
 	add_options_page(__('Media Libraries', 'media-libraries'), __('Media Libraries', 'media-libraries'), 'manage_options', 'ml_options', 'ml_options_page');
 
-	add_settings_section('ml_options_display', __('Display Settings', 'media-libraries'), 'ml_options_display', 'ml_options');
-
 	// Display field definitions
+	add_settings_section('ml_options_display', __('Display Settings', 'media-libraries'), 'ml_options_display', 'ml_options');
 	add_settings_field('ml_per_page', __('Products per page', 'media-libraries'), 'ml_per_page_field', 'ml_options', 'ml_options_display');
 	add_settings_field('ml_slug_base', __('Permalink base', 'media-libraries'), 'ml_slug_base_field', 'ml_options', 'ml_options_display');
 	add_settings_field('ml_slug_product', __('Product base', 'media-libraries'), 'ml_slug_product_field', 'ml_options', 'ml_options_display');
@@ -265,3 +252,5 @@ function ml_options_init() {
 
 	do_action('ml-options-init');
 }
+
+add_action('admin_menu', 'ml_options_init', 9);

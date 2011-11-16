@@ -177,10 +177,10 @@ function ml_product_postback ($post_id) {
 	$type = (isset($_REQUEST['ml_type'])) ? $_REQUEST['ml_type'] : null;
 	$link = (isset($_REQUEST['ml_link'])) ? $_REQUEST['ml_link'] : null;
 
-	ml_update_meta('ml_asin', $post_id, $asin);
-	ml_update_meta('ml_type', $post_id, $type);
-	ml_update_meta('ml_link', $post_id, $link);
-	ml_update_meta('ml_image', $post_id, $image);
+	update_post_meta($post_id, 'ml_asin', $asin);
+	update_post_meta($post_id, 'ml_type', $type);
+	update_post_meta($post_id, 'ml_link', $link);
+	update_post_meta($post_id, 'ml_image', $image);
 }
 
 /**
@@ -210,9 +210,10 @@ function ml_product_display_columns ($name, $post_id) {
 
 	switch ($name) {
 		case 'type':
+			$types = ml_product_categories();
 			$type = get_post_meta($post_id, 'ml_type', true);
-			if (!empty($type)) {
-				_e($type, 'media-libraries');
+			if (!empty($types[$type])) {
+				_e($types[$type], 'media-libraries');
 			}
 			break;
 

@@ -21,6 +21,134 @@
  */
 
 /**
+ * hack to use our templates
+ *
+ * @param string found template (passed from the filter)
+ * @param string type of custom post/taxonomy to check
+ * @param string type of page (archive, single, or taxonomy)
+ * @return string path to template
+ */
+function ml_insert_template ($template, $type, $page='archive') {
+	if ($page == 'taxonomy') {
+		$term = get_queried_object();
+		$check = $term->taxonomy;
+	}
+	else {
+		$check = get_query_var('post_type');
+	}
+
+	// one of ours to worry about!
+	if ($check == $type) {
+		$file = $page.'-'.$type.'.php';
+
+		// template not found in theme folder, so replace it with our default
+		if ($file != basename($template)) {
+			$path = dirname(__FILE__) . '/templates/' . $file;
+			if ( file_exists($path)) {
+				$template = $path;
+			}
+		}
+	}
+
+	return $template;
+}
+
+/**
+ * insert a page into WP and link it to our template
+ *
+ * @param string found template (passed from the filter)
+ * @param string type of custom post/taxonomy to check
+ * @param string type of page (archive, single, or taxonomy)
+ * @return string path to template
+ */
+function ml_add_library_page ($slug, $type='base') {
+	$templates = ml_library_templates();
+
+	if (isset($templates[$slug])) {
+		$args = array('comment_status' => 'closed', 'ping_status' => 'closed', 'post_title' => $templates[$slug]['title'], 'post_name' => $templates[$slug]['slug'], 'post_status' => 'publish', 'post_type' => 'page');
+
+		if ($type != 'base') {
+			$library = ml_get_option('ml_page_base');
+			$args['post_parent'] = $library;
+		}
+
+		$id = wp_insert_post($args);
+		if ($id) {
+			update_post_meta($id, '_wp_page_template', $templates[$slug]['file']);
+			ml_set_option('page_' . $type, $id);
+		}
+	}
+}
+
+/**
+ * Wrapper to template hack for archive-ml_shelf
+ *
+ * @param string found template
+ * @return string path to template
+ */
+function ml_page_template ($template) {
+	$post = get_post();
+	$ml_pages = array();
+	$templates = ml_library_templates();
+
+	// patch only for connected templates
+	foreach ($templates as $key => $val) {
+		$check = ml_get_option('ml_page_'.$key, true);
+		if ($check && is_numeric($check)) {
+			$ml_pages[$check] = $val['file'];
+		}
+	}
+
+	// use our page template where possible (allowing for themes and styles to override)
+	if ($post->post_type == 'page' && in_array($post->ID, array_keys($ml_pages))) {
+		$file = $ml_pages[$post->ID];
+		if ($file != basename($template)) {
+			$path = dirname(__FILE__) . '/templates/' . $file;
+			if ( file_exists($path)) {
+				$template = $path;
+			}
+		}
+	}
+
+	return $template;
+}
+
+/**
+ * available product categories
+ */
+function ml_product_categories() {
+	return array(
+		'b' => __('Books', 'media-libraries'),
+		'v' => __('Video', 'media-libraries'),
+		'm' => __('Music', 'media-libraries'),
+		'g' => __('Video Games', 'media-libraries'),
+	);
+}
+
+/**
+ * default page templates
+ */
+function ml_library_templates() {
+	return array(
+		'base' => array('title' => __('Library', 'media-libraries'), 'file' => 'page-library.php', 'slug' => ml_get_option('ml_slug_base')),
+		'product' => array('title' => __('Products', 'media-libraries'), 'file' => 'page-product.php', 'slug' => ml_get_option('ml_slug_product')),
+		'person' => array('title' => __('People', 'media-libraries'), 'file' => 'page-person.php', 'slug' => ml_get_option('ml_slug_person')),
+		'tag' => array('title' => __('Tags', 'media-libraries'), 'file' => 'page-tag.php', 'slug' => ml_get_option('ml_slug_tag')),
+		'review' => array('title' => __('Reviews', 'media-libraries'), 'file' => 'page-review.php', 'slug' => ml_get_option('ml_slug_review')),
+		'shelf' => array('title' => __('Shelves', 'media-libraries'), 'file' => 'page-shelf.php', 'slug' => ml_get_option('ml_slug_shelf')),
+		'user' => array('title' => __('Users', 'media-libraries'), 'file' => 'page-user.php', 'slug' => ml_get_option('ml_slug_user')),
+	);
+}
+
+function ml_blank_image() {
+	return plugins_url('no-image.png', __FILE__);
+}
+
+// unstable from here
+
+function the_library_header() {}
+
+/**
  * Prints the total number of books in the library.
  * @param string $status A comma-separated list of statuses to include in the count. If ommitted, all statuses will be counted.
  * @param bool $echo Whether or not to echo the results.
@@ -130,7 +258,5 @@ function products_used_since ($interval, $echo=true) {
     return $num;
 }
 
-
-function the_library_header() {}
 
 // Pure PHP files should not have a closing PHP tag!!

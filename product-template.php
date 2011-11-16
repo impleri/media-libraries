@@ -465,3 +465,5 @@ function previous_reviews_link( $label = '' ) {
 function product_shelf_listing() {
 
 }
+
+function the_product_usage () {}
